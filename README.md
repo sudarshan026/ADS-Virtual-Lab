@@ -335,20 +335,6 @@ gatherUsageStats = false
 
 ---
 
-## 🐛 Troubleshooting
-
-<details>
-<summary><strong>❌ ModuleNotFoundError: No module named 'xxx'</strong></summary>
-
-Install the missing dependency:
-```bash
-pip install <module-name>
-```
-For experiment 5 (SMOTE), ensure you're in the `VLADS/` root directory when launching — the wrapper adjusts `sys.path` relative to it.
-</details>
-
-<details>
-<summary><strong>❌ StreamlitAPIException: set_page_config() can only be called once</strong></summary>
 
 This should not occur in the unified app. If it does, ensure you're running `app.py` from the `VLADS/` root and not an individual experiment file:
 ```bash
