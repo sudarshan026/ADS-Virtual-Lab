@@ -1,0 +1,69 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+
+# ─── Virtual Environments ────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ─── IDE / Editor ────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ─── OS Files ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# ─── Streamlit ───────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ─── Jupyter ─────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── Logs & Temp ─────────────────────────────────────────
+*.log
+flaml.log
+temp_ag_models/
+*.tmp
+*.bak
+
+# ─── ML Artifacts ────────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
+mlruns/
+wandb/
+
+# ─── Data (large files — keep tracked CSVs explicit) ─────
+*.parquet
+*.feather
+*.arrow
+
+# ─── H2O / AutoGluon temp ───────────────────────────────
+h2o_*/
+AutogluonModels/
+ag_*/
+catboost_info/

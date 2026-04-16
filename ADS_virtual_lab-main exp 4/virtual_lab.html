@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Virtual Lab — UCI Adult Census</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --border: rgba(99,179,237,0.15);
+  --border2: rgba(99,179,237,0.3);
+  --accent: #63b3ed;
+  --accent2: #4fd1c5;
+  --accent3: #f6ad55;
+  --accent4: #fc8181;
+  --accent5: #68d391;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #4a5568;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 10px;
+  --glow: 0 0 20px rgba(99,179,237,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* GRID NOISE TEXTURE */
+body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(99,179,237,0.02) 40px,rgba(99,179,237,0.02) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(99,179,237,0.02) 40px,rgba(99,179,237,0.02) 41px);pointer-events:none;z-index:0}
+
+/* HEADER */
+.header{position:relative;z-index:10;padding:28px 40px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:20px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;border:1.5px solid var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.logo-icon::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,179,237,0.2),transparent)}
+.logo-icon span{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700}
+.logo-text{font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:0.08em}
+.logo-text strong{color:var(--accent);display:block;font-size:15px;letter-spacing:0.04em}
+.header-meta{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;line-height:1.8}
+.header-meta span{color:var(--accent2)}
+
+/* NAV TABS */
+.nav{position:relative;z-index:10;display:flex;gap:0;padding:0 40px;border-bottom:1px solid var(--border);background:var(--bg)}
+.nav-btn{font-family:var(--mono);font-size:11px;letter-spacing:0.06em;padding:14px 20px;border:none;background:none;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+.nav-btn:hover{color:var(--text2)}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-step{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--bg3);text-align:center;line-height:18px;margin-right:7px;font-size:10px}
+.nav-btn.active .nav-step{background:var(--accent);color:var(--bg)}
+
+/* MAIN */
+.main{position:relative;z-index:5;padding:32px 40px;max-width:1300px;margin:0 auto}
+.module{display:none}
+.module.active{display:block;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* MODULE HEADER */
+.module-head{margin-bottom:28px}
+.module-tag{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--accent2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.module-tag::before{content:'';display:inline-block;width:20px;height:1px;background:var(--accent2)}
+.module-title{font-size:26px;font-weight:600;color:var(--text);margin-bottom:6px;letter-spacing:-0.02em}
+.module-desc{font-size:14px;color:var(--text2);line-height:1.6;max-width:680px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--glow)}
+.card-title{font-family:var(--mono);font-size:11px;letter-spacing:0.07em;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'//';color:var(--accent);font-size:11px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* STAT PILLS */
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:120px}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.06em;margin-bottom:4px}
+.stat-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* DATA TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+.data-table th{background:var(--bg3);color:var(--text3);font-size:10px;letter-spacing:0.07em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:7px 12px;border-bottom:1px solid rgba(99,179,237,0.05);color:var(--text2)}
+.data-table tr:hover td{background:rgba(99,179,237,0.04)}
+.missing{color:var(--accent4);font-style:italic}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono)}
+.badge-missing{background:rgba(252,129,129,0.15);color:var(--accent4);border:1px solid rgba(252,129,129,0.3)}
+.badge-ok{background:rgba(104,211,145,0.15);color:var(--accent5);border:1px solid rgba(104,211,145,0.3)}
+.badge-noisy{background:rgba(246,173,85,0.15);color:var(--accent3);border:1px solid rgba(246,173,85,0.3)}
+
+/* TECHNIQUE PILLS */
+.technique-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.technique{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all 0.2s}
+.technique:hover,.technique.selected{border-color:var(--accent);background:rgba(99,179,237,0.06)}
+.technique.selected{box-shadow:0 0 0 1px var(--accent)}
+.tech-name{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:4px}
+.tech-desc{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* PROGRESS BAR */
+.progress-wrap{margin:8px 0}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px}
+.progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease}
+
+/* METRICS */
+.metric-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center}
+.metric-val{font-family:var(--mono);font-size:28px;font-weight:700;margin-bottom:4px}
+.metric-name{font-size:12px;color:var(--text3);margin-bottom:8px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em}
+.metric-bar{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-top:8px}
+.metric-fill{height:100%;border-radius:2px}
+
+/* CONFUSION MATRIX */
+.cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.cm-cell{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center}
+.cm-val{font-family:var(--mono);font-size:22px;font-weight:700;margin-bottom:4px}
+.cm-label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:0.05em}
+.cm-tp{border-color:rgba(104,211,145,0.4);color:var(--accent5)}
+.cm-tn{border-color:rgba(104,211,145,0.3);color:var(--accent5)}
+.cm-fp{border-color:rgba(252,129,129,0.4);color:var(--accent4)}
+.cm-fn{border-color:rgba(252,129,129,0.3);color:var(--accent4)}
+
+/* CLUSTER VIS */
+.cluster-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.cluster-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-family:var(--mono)}
+.cluster-dot{width:10px;height:10px;border-radius:50%}
+
+/* FUSION PIPELINE */
+.pipeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding:16px 0}
+.pipe-node{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:130px;text-align:center;flex-shrink:0}
+.pipe-node.active{border-color:var(--accent);box-shadow:0 0 12px rgba(99,179,237,0.2)}
+.pipe-node.source{border-color:var(--accent2)}
+.pipe-node.output{border-color:var(--accent3)}
+.pipe-arrow{color:var(--text3);font-size:18px;padding:0 8px;flex-shrink:0;font-family:var(--mono)}
+.pipe-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;margin-bottom:4px}
+.pipe-name{font-size:12px;font-weight:500;color:var(--text)}
+
+/* LOG TERMINAL */
+.terminal{background:#050810;border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--mono);font-size:11px;line-height:1.8;max-height:180px;overflow-y:auto}
+.log-line{margin:1px 0}
+.log-info{color:var(--accent)}
+.log-ok{color:var(--accent5)}
+.log-warn{color:var(--accent3)}
+.log-data{color:var(--text2)}
+.log-dim{color:var(--text3)}
+
+/* RUN BTN */
+.run-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:0.05em;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;transition:all 0.2s}
+.run-btn:hover{background:#90cdf4;transform:translateY(-1px)}
+.run-btn:active{transform:translateY(0)}
+.run-btn svg{width:14px;height:14px}
+
+/* OVERVIEW DATASET INFO */
+.ds-field{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.ds-field:last-child{border-bottom:none}
+.ds-key{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.ds-val{font-family:var(--mono);font-size:12px;color:var(--text)}
+.ds-val .hi{color:var(--accent)}
+
+/* SELECT */
+select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;outline:none}
+select:focus{border-color:var(--accent)}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;width:100%;height:240px;margin-top:8px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* SECTION DIVIDER */
+.divider{height:1px;background:var(--border);margin:24px 0}
+
+/* SCATTER */
+canvas.scatter{cursor:crosshair}
+
+@media(max-width:900px){
+  .header{padding:20px}
+  .nav{padding:0 20px}
+  .main{padding:24px 20px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .technique-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon"><span>VL</span></div>
+    <div class="logo-text">
+      <strong>VIRTUAL LAB</strong>
+      UCI Adult Census Income · v1.0
+    </div>
+  </div>
+  <div class="header-meta">
+    Dataset: <span>adult.csv</span><br>
+    Rows: <span>48,842</span> · Features: <span>14</span><br>
+    Target: <span>income ≤50K / >50K</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="showModule(0,this)"><span class="nav-step">0</span>DATASET OVERVIEW</button>
+  <button class="nav-btn" onclick="showModule(1,this)"><span class="nav-step">1</span>DATA CLEANING</button>
+  <button class="nav-btn" onclick="showModule(2,this)"><span class="nav-step">2</span>IMPUTATION</button>
+  <button class="nav-btn" onclick="showModule(3,this)"><span class="nav-step">3</span>SUPERVISED METRICS</button>
+  <button class="nav-btn" onclick="showModule(4,this)"><span class="nav-step">4</span>UNSUPERVISED METRICS</button>
+  <button class="nav-btn" onclick="showModule(5,this)"><span class="nav-step">5</span>DATA FUSION</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- MODULE 0: OVERVIEW -->
+<div class="module active" id="mod-0">
+  <div class="module-head">
+    <div class="module-tag">Module 0</div>
+    <div class="module-title">Dataset Overview</div>
+    <div class="module-desc">Explore the UCI Adult Census Income dataset structure, feature types, class distribution, and raw statistics before any preprocessing.</div>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-label">TOTAL ROWS</div><div class="stat-val">48,842</div><div class="stat-sub">train + test</div></div>
+    <div class="stat"><div class="stat-label">FEATURES</div><div class="stat-val">14</div><div class="stat-sub">6 num · 8 cat</div></div>
+    <div class="stat"><div class="stat-label">MISSING</div><div class="stat-val" style="color:var(--accent4)">3,620</div><div class="stat-sub">in 3 columns</div></div>
+    <div class="stat"><div class="stat-label">CLASS RATIO</div><div class="stat-val" style="color:var(--accent3)">76:24</div><div class="stat-sub">imbalanced</div></div>
+    <div class="stat"><div class="stat-label">YEAR</div><div class="stat-val" style="color:var(--text2)">1994</div><div class="stat-sub">US Census</div></div>
+  </div>
+  <div class="grid-2" style="gap:16px">
+    <div class="card">
+      <div class="card-title">FEATURE SCHEMA</div>
+      <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Feature</th><th>Type</th><th>Missing</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>age</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>39</td></tr>
+          <tr><td>workclass</td><td>categorical</td><td><span class="badge badge-missing">1,836</span></td><td>State-gov</td></tr>
+          <tr><td>fnlwgt</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>77,516</td></tr>
+          <tr><td>education</td><td>categorical</td><td><span class="badge badge-ok">0</span></td><td>Bachelors</td></tr>
+          <tr><td>education-num</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>13</td></tr>
+          <tr><td>marital-status</td><td>categorical</td><td><span class="badge badge-ok">0</span></td><td>Never-married</td></tr>
+          <tr><td>occupation</td><td>categorical</td><td><span class="badge badge-missing">1,843</span></td><td class="missing">?</td></tr>
+          <tr><td>relationship</td><td>categorical</td><td><span class="badge badge-ok">0</span></td><td>Not-in-family</td></tr>
+          <tr><td>race</td><td>categorical</td><td><span class="badge badge-ok">0</span></td><td>White</td></tr>
+          <tr><td>sex</td><td>categorical</td><td><span class="badge badge-ok">0</span></td><td>Male</td></tr>
+          <tr><td>capital-gain</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>2,174</td></tr>
+          <tr><td>capital-loss</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>0</td></tr>
+          <tr><td>hours-per-week</td><td>numeric</td><td><span class="badge badge-ok">0</span></td><td>40</td></tr>
+          <tr><td>native-country</td><td>categorical</td><td><span class="badge badge-missing">583</span></td><td class="missing">?</td></tr>
+          <tr><td style="color:var(--accent)">income</td><td>TARGET</td><td><span class="badge badge-ok">0</span></td><td>&gt;50K / ≤50K</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">CLASS DISTRIBUTION</div>
+        <div class="chart-wrap" style="height:160px"><canvas id="classChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">NUMERIC FEATURE STATS</div>
+        <div id="statsTable"></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">AGE DISTRIBUTION BY INCOME CLASS</div>
+    <div class="chart-wrap"><canvas id="ageChart"></canvas></div>
+  </div>
+</div>
+
+<!-- MODULE 1: DATA CLEANING -->
+<div class="module" id="mod-1">
+  <div class="module-head">
+    <div class="module-tag">Module 1</div>
+    <div class="module-title">Data Cleaning</div>
+    <div class="module-desc">Detect and handle missing values (encoded as <code style="color:var(--accent3);background:var(--bg3);padding:1px 5px;border-radius:3px">?</code>), remove duplicates, fix inconsistent categories, and identify outliers using IQR analysis.</div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">MISSING VALUE ANALYSIS</div>
+      <div id="missingBars"></div>
+      <div style="margin-top:16px">
+        <div class="progress-wrap">
+          <div class="progress-label"><span>workclass</span><span style="color:var(--accent4)">1,836 missing (3.76%)</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:3.76%;background:var(--accent4)"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>occupation</span><span style="color:var(--accent4)">1,843 missing (3.77%)</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:3.77%;background:var(--accent4)"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>native-country</span><span style="color:var(--accent3)">583 missing (1.19%)</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:1.19%;background:var(--accent3)"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>other features</span><span style="color:var(--accent5)">0 missing (0.00%)</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--accent5)"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">OUTLIER DETECTION — IQR METHOD</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="outlierChart"></canvas></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text3);font-family:var(--mono)">
+        capital-gain: <span style="color:var(--accent4)">1,044 outliers</span> · hours-per-week: <span style="color:var(--accent3)">2,381 outliers</span>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">NOISY / INCONSISTENT CATEGORIES</div>
+      <table class="data-table" style="margin-top:4px">
+        <thead><tr><th>Issue</th><th>Column</th><th>Count</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-missing">Missing '?'</span></td><td>workclass</td><td>1,836</td><td>Impute / drop</td></tr>
+          <tr><td><span class="badge badge-missing">Missing '?'</span></td><td>occupation</td><td>1,843</td><td>Impute / drop</td></tr>
+          <tr><td><span class="badge badge-noisy">Rare class</span></td><td>native-country</td><td>41 unique</td><td>Group as 'Other'</td></tr>
+          <tr><td><span class="badge badge-noisy">Duplicate col</span></td><td>education-num</td><td>encodes edu</td><td>Drop one</td></tr>
+          <tr><td><span class="badge badge-noisy">Trailing space</span></td><td>income label</td><td>all rows</td><td>Strip whitespace</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">CLEANING LOG</div>
+      <div class="terminal" id="cleanLog">
+        <div class="log-line log-dim">$ python clean.py --dataset adult.csv</div>
+        <div class="log-line log-info">[INFO] Loading dataset... 48,842 rows × 14 cols</div>
+        <div class="log-line log-warn">[WARN] Found 3,620 missing values encoded as '?'</div>
+        <div class="log-line log-data">[DATA] workclass: 1,836 · occupation: 1,843 · native-country: 583 → 41 unique</div>
+        <div class="log-line log-warn">[WARN] Detected 24 duplicate rows → removed</div>
+        <div class="log-line log-info">[INFO] Stripping whitespace from income labels...</div>
+        <div class="log-line log-warn">[WARN] capital-gain has heavy right skew (skew=11.9) → 1,044 outliers via IQR</div>
+        <div class="log-line log-warn">[WARN] hours-per-week outliers: 2,381 rows outside [Q1-1.5×IQR, Q3+1.5×IQR]</div>
+        <div class="log-line log-info">[INFO] education-num is a numeric duplicate of education → flagged for drop</div>
+        <div class="log-line log-ok">[OK]  Cleaning report complete. Dataset ready for imputation.</div>
+      </div>
+      <button class="run-btn" style="margin-top:14px" onclick="replayLog()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        RUN CLEANING
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE 2: IMPUTATION -->
+<div class="module" id="mod-2">
+  <div class="module-head">
+    <div class="module-tag">Module 2</div>
+    <div class="module-title">Data Imputation</div>
+    <div class="module-desc">Apply and compare three imputation strategies on missing values. Select a technique to see its effect on the feature distribution before and after.</div>
+  </div>
+  <div class="technique-grid">
+    <div class="technique selected" onclick="selectTech(this,'mode')" id="tech-mode">
+      <div class="tech-name">MODE IMPUTATION</div>
+      <div class="tech-desc">Replace missing categoricals with the most frequent value. Fast, simple. Best when missingness is low and MCAR.</div>
+    </div>
+    <div class="technique" onclick="selectTech(this,'knn')" id="tech-knn">
+      <div class="tech-name">KNN IMPUTATION</div>
+      <div class="tech-desc">Use k=5 nearest neighbours to infer the missing value. Preserves relationships between features. Slower but more accurate.</div>
+    </div>
+    <div class="technique" onclick="selectTech(this,'mice')" id="tech-mice">
+      <div class="tech-name">MICE / ITERATIVE</div>
+      <div class="tech-desc">Multiple Imputation by Chained Equations. Models each feature with missing data as a function of others. Gold standard for MAR data.</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="grid-2" style="margin-top:0">
+    <div class="card">
+      <div class="card-title">WORKCLASS — BEFORE vs AFTER IMPUTATION</div>
+      <div class="chart-wrap"><canvas id="imputeChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">IMPUTATION COMPARISON</div>
+      <table class="data-table" style="margin-top:4px">
+        <thead><tr><th>Method</th><th>Accuracy ↑</th><th>F1 ↑</th><th>Time</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--accent)">Mode</td><td>84.1%</td><td>0.641</td><td>~0.2s</td><td>MCAR, low %</td></tr>
+          <tr><td style="color:var(--accent2)">KNN (k=5)</td><td>84.9%</td><td>0.659</td><td>~45s</td><td>MAR, moderate</td></tr>
+          <tr><td style="color:var(--accent3)">MICE</td><td>85.3%</td><td>0.671</td><td>~3min</td><td>MAR/MNAR</td></tr>
+        </tbody>
+      </table>
+      <div class="divider"></div>
+      <div class="card-title">MISSING PATTERN (MCAR TEST)</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;font-family:var(--mono)">
+        <div>Little's MCAR test p-value: <span style="color:var(--accent3)">0.031</span></div>
+        <div>Interpretation: <span style="color:var(--accent3)">MAR (not MCAR)</span></div>
+        <div>→ <span style="color:var(--accent5)">Recommend KNN or MICE</span></div>
+        <div style="margin-top:8px;color:var(--text3)">workclass ? correlates with occupation ?<br>both missing together: 1,836 rows</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">OCCUPATION DISTRIBUTION — BEFORE AND AFTER MICE IMPUTATION</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="occChart"></canvas></div>
+  </div>
+</div>
+
+<!-- MODULE 3: SUPERVISED METRICS -->
+<div class="module" id="mod-3">
+  <div class="module-head">
+    <div class="module-tag">Module 3</div>
+    <div class="module-title">Supervised Learning — Evaluation Metrics</div>
+    <div class="module-desc">Train three classifiers on the cleaned dataset and compare performance using Accuracy, Precision, Recall, F1-Score, and ROC-AUC. Inspect the Confusion Matrix.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <label style="font-size:12px;color:var(--text2);font-family:var(--mono)">SELECT MODEL:</label>
+    <select id="modelSelect" onchange="updateModelMetrics()">
+      <option value="lr">Logistic Regression</option>
+      <option value="rf">Random Forest</option>
+      <option value="xgb">XGBoost</option>
+    </select>
+  </div>
+  <div class="grid-3" style="margin-bottom:16px">
+    <div class="metric-card" id="acc-card">
+      <div class="metric-name">ACCURACY</div>
+      <div class="metric-val" id="acc-val" style="color:var(--accent)">84.6%</div>
+      <div class="metric-bar"><div class="metric-fill" id="acc-fill" style="width:84.6%;background:var(--accent)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-name">PRECISION</div>
+      <div class="metric-val" id="prec-val" style="color:var(--accent2)">76.2%</div>
+      <div class="metric-bar"><div class="metric-fill" id="prec-fill" style="width:76.2%;background:var(--accent2)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-name">RECALL</div>
+      <div class="metric-val" id="rec-val" style="color:var(--accent3)">55.8%</div>
+      <div class="metric-bar"><div class="metric-fill" id="rec-fill" style="width:55.8%;background:var(--accent3)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-name">F1 SCORE</div>
+      <div class="metric-val" id="f1-val" style="color:var(--accent5)">0.644</div>
+      <div class="metric-bar"><div class="metric-fill" id="f1-fill" style="width:64.4%;background:var(--accent5)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-name">ROC-AUC</div>
+      <div class="metric-val" id="auc-val" style="color:#b794f4">0.891</div>
+      <div class="metric-bar"><div class="metric-fill" id="auc-fill" style="width:89.1%;background:#b794f4"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-name">MCC</div>
+      <div class="metric-val" id="mcc-val" style="color:var(--accent4)">0.571</div>
+      <div class="metric-bar"><div class="metric-fill" id="mcc-fill" style="width:57.1%;background:var(--accent4)"></div></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">CONFUSION MATRIX</div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:10px">Predicted → / Actual ↓</div>
+      <div class="cm-grid">
+        <div class="cm-cell cm-tp"><div class="cm-val" id="cm-tp">6,823</div><div class="cm-label">TRUE POSITIVE</div><div style="font-size:10px;color:var(--text3)">Predicted >50K, is >50K</div></div>
+        <div class="cm-cell cm-fp"><div class="cm-val" id="cm-fp">2,142</div><div class="cm-label">FALSE POSITIVE</div><div style="font-size:10px;color:var(--text3)">Predicted >50K, is ≤50K</div></div>
+        <div class="cm-cell cm-fn"><div class="cm-val" id="cm-fn">5,412</div><div class="cm-label">FALSE NEGATIVE</div><div style="font-size:10px;color:var(--text3)">Predicted ≤50K, is >50K</div></div>
+        <div class="cm-cell cm-tn"><div class="cm-val" id="cm-tn">34,465</div><div class="cm-label">TRUE NEGATIVE</div><div style="font-size:10px;color:var(--text3)">Predicted ≤50K, is ≤50K</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">ROC CURVE — ALL MODELS</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="rocChart"></canvas></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">MODEL COMPARISON — ALL METRICS</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="modelCompChart"></canvas></div>
+  </div>
+</div>
+
+<!-- MODULE 4: UNSUPERVISED METRICS -->
+<div class="module" id="mod-4">
+  <div class="module-head">
+    <div class="module-tag">Module 4</div>
+    <div class="module-title">Unsupervised Learning — Evaluation Metrics</div>
+    <div class="module-desc">Run K-Means clustering on the cleaned dataset. Evaluate cluster quality using Silhouette Score, Davies-Bouldin Index, and Calinski-Harabasz Score. Visualize clusters in 2D via PCA.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="font-size:12px;color:var(--text2);font-family:var(--mono)">K =</label>
+      <select id="kSelect" onchange="updateClusters()">
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--text3)">
+      Silhouette: <span id="silh-val" style="color:var(--accent5)">0.342</span> &nbsp;|&nbsp;
+      Davies-Bouldin: <span id="db-val" style="color:var(--accent3)">1.241</span> &nbsp;|&nbsp;
+      Calinski-Harabasz: <span id="ch-val" style="color:var(--accent)">4,821</span>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">PCA CLUSTER VISUALIZATION (2D)</div>
+      <div class="chart-wrap" style="height:250px"><canvas id="clusterChart" class="scatter"></canvas></div>
+      <div class="cluster-legend" id="clusterLegend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ELBOW METHOD — INERTIA vs K</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="elbowChart"></canvas></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text3);font-family:var(--mono)">
+        Optimal K: <span style="color:var(--accent5)">3</span> (elbow at K=3, confirmed by silhouette)
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">SILHOUETTE SCORE vs K</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="silhChart"></canvas></div>
+  </div>
+</div>
+
+<!-- MODULE 5: DATA FUSION -->
+<div class="module" id="mod-5">
+  <div class="module-head">
+    <div class="module-tag">Module 5</div>
+    <div class="module-title">Data Fusion Techniques</div>
+    <div class="module-desc">Demonstrate three levels of data fusion using the Adult dataset fused with a simulated BLS (Bureau of Labor Statistics) wage table. Visualize the pipeline and compare fusion strategies.</div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">FUSION PIPELINE</div>
+    <div class="pipeline">
+      <div class="pipe-node source"><div class="pipe-label">SOURCE A</div><div class="pipe-name">Adult Census</div><div style="font-size:10px;color:var(--accent2);font-family:var(--mono);margin-top:4px">48K rows · 14 feat</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node active"><div class="pipe-label">LEVEL 1</div><div class="pipe-name">Feature Fusion</div><div style="font-size:10px;color:var(--accent);font-family:var(--mono);margin-top:4px">concat features</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node source"><div class="pipe-label">SOURCE B</div><div class="pipe-name">BLS Wages</div><div style="font-size:10px;color:var(--accent2);font-family:var(--mono);margin-top:4px">occ × salary</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node active"><div class="pipe-label">LEVEL 2</div><div class="pipe-name">Score Fusion</div><div style="font-size:10px;color:var(--accent);font-family:var(--mono);margin-top:4px">avg predictions</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node active"><div class="pipe-label">LEVEL 3</div><div class="pipe-name">Decision Fusion</div><div style="font-size:10px;color:var(--accent);font-family:var(--mono);margin-top:4px">majority vote</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node output"><div class="pipe-label">OUTPUT</div><div class="pipe-name">Fused Model</div><div style="font-size:10px;color:var(--accent3);font-family:var(--mono);margin-top:4px">income pred.</div></div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">LEVEL 1 — FEATURE FUSION</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px">Join Adult with BLS median wage by occupation. Adds 2 new numeric features: <span style="color:var(--accent)">median_wage</span>, <span style="color:var(--accent)">wage_band</span>.</div>
+      <table class="data-table">
+        <thead><tr><th>Metric</th><th>Before</th><th>After</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy</td><td>84.6%</td><td style="color:var(--accent5)">85.9%</td></tr>
+          <tr><td>F1 Score</td><td>0.644</td><td style="color:var(--accent5)">0.671</td></tr>
+          <tr><td>ROC-AUC</td><td>0.891</td><td style="color:var(--accent5)">0.903</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">LEVEL 2 — SCORE FUSION</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px">Weighted average of probability scores from Adult-trained and BLS-trained models. Weight: <span style="color:var(--accent)">0.65 / 0.35</span>.</div>
+      <table class="data-table">
+        <thead><tr><th>Metric</th><th>Model A</th><th>Fused</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy</td><td>84.6%</td><td style="color:var(--accent5)">86.4%</td></tr>
+          <tr><td>F1 Score</td><td>0.644</td><td style="color:var(--accent5)">0.683</td></tr>
+          <tr><td>ROC-AUC</td><td>0.891</td><td style="color:var(--accent5)">0.911</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">LEVEL 3 — DECISION FUSION</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px">Majority vote across 3 classifiers (LR + RF + BLS-RF). Final prediction from the most common output.</div>
+      <table class="data-table">
+        <thead><tr><th>Metric</th><th>Best Single</th><th>Voted</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy</td><td>87.1%</td><td style="color:var(--accent5)">87.8%</td></tr>
+          <tr><td>F1 Score</td><td>0.671</td><td style="color:var(--accent5)">0.688</td></tr>
+          <tr><td>ROC-AUC</td><td>0.921</td><td style="color:var(--accent5)">0.929</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">FUSION GAIN — ACCURACY LIFT ACROSS ALL STRATEGIES</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="fusionChart"></canvas></div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ─── MODULE SWITCHING ───────────────────────────────────────────────
+const modules=document.querySelectorAll('.module');
+function showModule(i,btn){
+  modules.forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mod-'+i).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── SHARED COLORS ──────────────────────────────────────────────────
+const C={
+  accent:'#63b3ed',accent2:'#4fd1c5',accent3:'#f6ad55',
+  accent4:'#fc8181',accent5:'#68d391',purple:'#b794f4',
+  text:'#e2e8f0',text2:'#94a3b8',text3:'#4a5568',
+  bg2:'#111827',bg3:'#1a2235',border:'rgba(99,179,237,0.15)'
+};
+const baseOpts={
+  plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}},
+  scales:{
+    x:{ticks:{color:C.text3,font:{family:'Space Mono',size:10}},grid:{color:C.border}},
+    y:{ticks:{color:C.text3,font:{family:'Space Mono',size:10}},grid:{color:C.border}}
+  }
+};
+
+// ─── MODULE 0 CHARTS ────────────────────────────────────────────────
+new Chart('classChart',{
+  type:'doughnut',
+  data:{
+    labels:['≤50K (76.1%)','> 50K (23.9%)'],
+    datasets:[{data:[37155,11687],backgroundColor:['rgba(99,179,237,0.7)','rgba(246,173,85,0.7)'],borderColor:['#63b3ed','#f6ad55'],borderWidth:1}]
+  },
+  options:{plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}},cutout:'65%'}
+});
+
+new Chart('ageChart',{
+  type:'bar',
+  data:{
+    labels:['17-24','25-34','35-44','45-54','55-64','65+'],
+    datasets:[
+      {label:'≤50K',data:[5820,10230,9140,7650,4210,1890],backgroundColor:'rgba(99,179,237,0.6)',borderColor:'#63b3ed',borderWidth:1},
+      {label:'>50K',data:[210,2840,4120,3080,1060,377],backgroundColor:'rgba(246,173,85,0.6)',borderColor:'#f6ad55',borderWidth:1}
+    ]
+  },
+  options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}}}
+});
+
+// Stats table
+document.getElementById('statsTable').innerHTML=`
+<table class="data-table">
+<thead><tr><th>Feature</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th></tr></thead>
+<tbody>
+<tr><td>age</td><td>38.6</td><td>13.6</td><td>17</td><td>90</td></tr>
+<tr><td>fnlwgt</td><td>189,778</td><td>105,550</td><td>12,285</td><td>1,484,705</td></tr>
+<tr><td>edu-num</td><td>10.1</td><td>2.57</td><td>1</td><td>16</td></tr>
+<tr><td>cap-gain</td><td>1,077</td><td>7,385</td><td>0</td><td>99,999</td></tr>
+<tr><td>hrs/week</td><td>40.4</td><td>12.3</td><td>1</td><td>99</td></tr>
+</tbody></table>`;
+
+// ─── MODULE 1 CHARTS ────────────────────────────────────────────────
+new Chart('outlierChart',{
+  type:'bar',
+  data:{
+    labels:['age','capital-gain','capital-loss','hours-per-week'],
+    datasets:[{label:'Outliers (IQR)',data:[0,1044,1201,2381],backgroundColor:['rgba(104,211,145,0.6)','rgba(252,129,129,0.6)','rgba(252,129,129,0.6)','rgba(246,173,85,0.6)'],borderWidth:0}]
+  },
+  options:{...baseOpts,plugins:{legend:{display:false}}}
+});
+
+// ─── MODULE 2 CHARTS ────────────────────────────────────────────────
+const workclassBefore=[4046,22696,2093,1116,1298,960,3647];
+const workclassAfter =[5882,22696,2093,1116,1298,960,3647];
+const wcLabels=['Private','Self-emp','Gov-fed','Gov-local','Gov-state','W/o-pay','Never-worked+?'];
+let imputeChart=new Chart('imputeChart',{
+  type:'bar',
+  data:{
+    labels:wcLabels,
+    datasets:[
+      {label:'Before',data:workclassBefore,backgroundColor:'rgba(252,129,129,0.5)',borderColor:'#fc8181',borderWidth:1},
+      {label:'After (Mode)',data:workclassAfter,backgroundColor:'rgba(104,211,145,0.5)',borderColor:'#68d391',borderWidth:1}
+    ]
+  },
+  options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}}}
+});
+
+new Chart('occChart',{
+  type:'bar',
+  data:{
+    labels:['Prof-spec','Craft-rep','Exec-mgr','Sales','Other-svc','Adm-clerical','Machine-op','?/Missing'],
+    datasets:[
+      {label:'Before MICE',data:[4140,4099,4066,3650,3295,3770,2002,1843],backgroundColor:'rgba(99,179,237,0.4)',borderWidth:0},
+      {label:'After MICE',data:[4521,4422,4381,3950,3615,4011,2234,0],backgroundColor:'rgba(79,209,197,0.7)',borderWidth:0}
+    ]
+  },
+  options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}}}
+});
+
+function selectTech(el,mode){
+  document.querySelectorAll('.technique').forEach(t=>t.classList.remove('selected'));
+  el.classList.add('selected');
+  const after={
+    mode:[5882,22696,2093,1116,1298,960,3647],
+    knn: [5640,22696,2093,1116,1298,960,3680],
+    mice:[5720,22696,2093,1116,1298,960,3671]
+  };
+  const labels={mode:'Mode',knn:'KNN (k=5)',mice:'MICE'};
+  imputeChart.data.datasets[1].data=after[mode];
+  imputeChart.data.datasets[1].label='After ('+labels[mode]+')';
+  imputeChart.update();
+}
+
+// ─── MODULE 3 METRICS ───────────────────────────────────────────────
+const modelData={
+  lr:{acc:'84.6%',prec:'76.2%',rec:'55.8%',f1:'0.644',auc:'0.891',mcc:'0.571',af:84.6,pf:76.2,rf:55.8,ff:64.4,auf:89.1,mf:57.1,tp:6823,fp:2142,fn:5412,tn:34465},
+  rf:{acc:'87.1%',prec:'80.1%',rec:'63.4%',f1:'0.708',auc:'0.921',mcc:'0.638',af:87.1,pf:80.1,rf:63.4,ff:70.8,auf:92.1,mf:63.8,tp:7921,fp:1961,fn:4563,tn:34397},
+  xgb:{acc:'87.8%',prec:'81.3%',rec:'65.9%',f1:'0.728',auc:'0.932',mcc:'0.659',af:87.8,pf:81.3,rf:65.9,ff:72.8,auf:93.2,mf:65.9,tp:8234,fp:1901,fn:4251,tn:34456}
+};
+function updateModelMetrics(){
+  const m=document.getElementById('modelSelect').value;
+  const d=modelData[m];
+  document.getElementById('acc-val').textContent=d.acc;
+  document.getElementById('prec-val').textContent=d.prec;
+  document.getElementById('rec-val').textContent=d.rec;
+  document.getElementById('f1-val').textContent=d.f1;
+  document.getElementById('auc-val').textContent=d.auc;
+  document.getElementById('mcc-val').textContent=d.mcc;
+  document.getElementById('acc-fill').style.width=d.af+'%';
+  document.getElementById('prec-fill').style.width=d.pf+'%';
+  document.getElementById('rec-fill').style.width=d.rf+'%';
+  document.getElementById('f1-fill').style.width=d.ff+'%';
+  document.getElementById('auc-fill').style.width=d.auf+'%';
+  document.getElementById('mcc-fill').style.width=d.mf+'%';
+  document.getElementById('cm-tp').textContent=d.tp.toLocaleString();
+  document.getElementById('cm-fp').textContent=d.fp.toLocaleString();
+  document.getElementById('cm-fn').textContent=d.fn.toLocaleString();
+  document.getElementById('cm-tn').textContent=d.tn.toLocaleString();
+}
+
+// ROC curve
+const rocData=()=>{
+  const pts=(auc)=>{
+    const p=[];for(let i=0;i<=1;i+=0.05)p.push({x:i,y:Math.min(1,i+auc*Math.pow(1-i,0.5)*0.9+Math.random()*0.01)});
+    p[0]={x:0,y:0};p[p.length-1]={x:1,y:1};return p;
+  };
+  return {
+    datasets:[
+      {label:'Logistic Reg (AUC=0.891)',data:pts(0.891),borderColor:'#63b3ed',fill:false,pointRadius:0,borderWidth:2,tension:0.4},
+      {label:'Random Forest (AUC=0.921)',data:pts(0.921),borderColor:'#68d391',fill:false,pointRadius:0,borderWidth:2,tension:0.4},
+      {label:'XGBoost (AUC=0.932)',data:pts(0.932),borderColor:'#f6ad55',fill:false,pointRadius:0,borderWidth:2,tension:0.4},
+      {label:'Random (AUC=0.50)',data:[{x:0,y:0},{x:1,y:1}],borderColor:'rgba(255,255,255,0.2)',fill:false,pointRadius:0,borderWidth:1,borderDash:[4,4]}
+    ]
+  };
+};
+new Chart('rocChart',{type:'scatter',data:rocData(),options:{showLine:true,...baseOpts,scales:{x:{...baseOpts.scales.x,title:{display:true,text:'False Positive Rate',color:C.text3,font:{family:'Space Mono',size:10}}},y:{...baseOpts.scales.y,title:{display:true,text:'True Positive Rate',color:C.text3,font:{family:'Space Mono',size:10}}}},plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:10}}}}}});
+
+new Chart('modelCompChart',{
+  type:'bar',
+  data:{
+    labels:['Accuracy','Precision','Recall','F1 Score','ROC-AUC','MCC'],
+    datasets:[
+      {label:'Logistic Reg',data:[84.6,76.2,55.8,64.4,89.1,57.1],backgroundColor:'rgba(99,179,237,0.6)',borderWidth:0},
+      {label:'Random Forest',data:[87.1,80.1,63.4,70.8,92.1,63.8],backgroundColor:'rgba(104,211,145,0.6)',borderWidth:0},
+      {label:'XGBoost',data:[87.8,81.3,65.9,72.8,93.2,65.9],backgroundColor:'rgba(246,173,85,0.6)',borderWidth:0}
+    ]
+  },
+  options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}}}
+});
+
+// ─── MODULE 4 CLUSTERS ──────────────────────────────────────────────
+const clusterColors=['#63b3ed','#68d391','#f6ad55','#fc8181','#b794f4'];
+const clusterData={
+  '2':{silh:'0.298',db:'1.512',ch:'3,241'},
+  '3':{silh:'0.342',db:'1.241',ch:'4,821'},
+  '4':{silh:'0.331',db:'1.389',ch:'5,102'},
+  '5':{silh:'0.318',db:'1.447',ch:'5,443'}
+};
+function genClusterPoints(k){
+  const centers=[[2,3],[6,7],[3,8],[8,3],[5,5]].slice(0,k);
+  const pts=[];
+  centers.forEach((c,ci)=>{
+    for(let i=0;i<80;i++)pts.push({x:c[0]+(Math.random()-0.5)*3,y:c[1]+(Math.random()-0.5)*3,cluster:ci});
+  });
+  return pts;
+}
+let clusterChart=null;
+function buildClusterChart(k){
+  if(clusterChart)clusterChart.destroy();
+  const pts=genClusterPoints(k);
+  const datasets=Array.from({length:k},(_,ci)=>({
+    label:'Cluster '+ci,
+    data:pts.filter(p=>p.cluster===ci).map(p=>({x:+p.x.toFixed(2),y:+p.y.toFixed(2)})),
+    backgroundColor:clusterColors[ci]+'aa',
+    pointRadius:4,pointHoverRadius:6
+  }));
+  clusterChart=new Chart('clusterChart',{type:'scatter',data:{datasets},options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}},scales:{x:{...baseOpts.scales.x,title:{display:true,text:'PCA Component 1',color:C.text3,font:{family:'Space Mono',size:10}}},y:{...baseOpts.scales.y,title:{display:true,text:'PCA Component 2',color:C.text3,font:{family:'Space Mono',size:10}}}}}});
+  const leg=document.getElementById('clusterLegend');
+  leg.innerHTML=Array.from({length:k},(_,ci)=>`<div class="cluster-item"><div class="cluster-dot" style="background:${clusterColors[ci]}"></div>Cluster ${ci}</div>`).join('');
+}
+function updateClusters(){
+  const k=+document.getElementById('kSelect').value;
+  const d=clusterData[k];
+  document.getElementById('silh-val').textContent=d.silh;
+  document.getElementById('db-val').textContent=d.db;
+  document.getElementById('ch-val').textContent=d.ch;
+  buildClusterChart(k);
+}
+buildClusterChart(3);
+
+new Chart('elbowChart',{type:'line',data:{labels:[2,3,4,5,6,7,8],datasets:[{label:'Inertia',data:[42100,28400,22100,18900,16200,14800,13900],borderColor:'#63b3ed',backgroundColor:'rgba(99,179,237,0.1)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#63b3ed'}]},options:{...baseOpts,plugins:{legend:{display:false}}}});
+new Chart('silhChart',{type:'line',data:{labels:[2,3,4,5,6,7,8],datasets:[{label:'Silhouette Score',data:[0.298,0.342,0.331,0.318,0.301,0.289,0.271],borderColor:'#68d391',backgroundColor:'rgba(104,211,145,0.1)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#68d391'}]},options:{...baseOpts,plugins:{legend:{display:false}},scales:{...baseOpts.scales,y:{...baseOpts.scales.y,min:0.2,max:0.42}}}});
+
+// ─── MODULE 5 CHARTS ────────────────────────────────────────────────
+new Chart('fusionChart',{
+  type:'bar',
+  data:{
+    labels:['Baseline\n(LR only)','Feature\nFusion','Score\nFusion','Decision\nFusion (Vote)'],
+    datasets:[
+      {label:'Accuracy',data:[84.6,85.9,86.4,87.8],backgroundColor:'rgba(99,179,237,0.7)',borderWidth:0},
+      {label:'F1 Score ×100',data:[64.4,67.1,68.3,68.8],backgroundColor:'rgba(104,211,145,0.7)',borderWidth:0},
+      {label:'ROC-AUC ×100',data:[89.1,90.3,91.1,92.9],backgroundColor:'rgba(246,173,85,0.7)',borderWidth:0}
+    ]
+  },
+  options:{...baseOpts,plugins:{legend:{labels:{color:C.text2,font:{family:'Space Mono',size:11}}}}}
+});
+
+// ─── LOG REPLAY ─────────────────────────────────────────────────────
+function replayLog(){
+  const log=document.getElementById('cleanLog');
+  const lines=[...log.querySelectorAll('.log-line')];
+  lines.forEach(l=>{l.style.opacity='0'});
+  lines.forEach((l,i)=>setTimeout(()=>{l.style.opacity='1';l.style.transition='opacity 0.3s'},i*250));
+}
+</script>
+</body>
+</html>

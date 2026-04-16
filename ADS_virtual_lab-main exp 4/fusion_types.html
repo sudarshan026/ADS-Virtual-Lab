@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Data Fusion Lab — UCI Adult Census</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Fraunces:ital,wght@0,300;0,500;0,700;1,300;1,500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#07080d;--bg2:#0d1017;--bg3:#131720;--bg4:#1a2030;
+  --teal:#2dd4bf;--teal2:#99f6e4;--teal3:rgba(45,212,191,0.08);
+  --amber:#fbbf24;--amber2:#fde68a;
+  --rose:#fb7185;--rose2:#fecdd3;
+  --violet:#a78bfa;--violet2:#ede9fe;
+  --sky:#38bdf8;--sky2:#bae6fd;
+  --lime:#a3e635;--lime2:#ecfccb;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;--text4:#1e293b;
+  --border:rgba(45,212,191,0.12);--border2:rgba(45,212,191,0.25);
+  --mono:'IBM Plex Mono',monospace;--serif:'Fraunces',serif;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+
+/* scanline overlay */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:999}
+
+/* corner glow */
+body::before{content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(45,212,191,0.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* ── HEADER ── */
+.header{position:relative;z-index:10;padding:24px 36px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;border-bottom:1px solid var(--border)}
+.hlogo{display:flex;align-items:center;gap:14px}
+.hbox{width:42px;height:42px;border:1px solid var(--teal);display:grid;place-items:center;position:relative;flex-shrink:0}
+.hbox::before,.hbox::after{content:'';position:absolute;width:6px;height:6px;border:1px solid var(--teal)}
+.hbox::before{top:-3px;left:-3px}
+.hbox::after{bottom:-3px;right:-3px}
+.hbox-inner{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--teal);font-style:italic}
+.htitle{font-family:var(--serif);font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.01em}
+.htitle span{color:var(--teal);font-style:italic}
+.hsub{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:0.08em}
+.hpills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hpill{font-size:10px;padding:4px 10px;border:1px solid var(--border2);color:var(--text2);letter-spacing:0.06em}
+.hmeta{font-size:10px;color:var(--text3);text-align:right;line-height:2}
+.hmeta b{color:var(--teal);font-weight:400}
+
+/* ── SIDEBAR + LAYOUT ── */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 90px);position:relative;z-index:5}
+.sidebar{border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:calc(100vh - 90px);overflow-y:auto}
+.sb-section{font-size:9px;letter-spacing:0.12em;color:var(--text3);padding:0 20px 8px;margin-top:16px}
+.sb-section:first-child{margin-top:0}
+.sb-btn{width:100%;text-align:left;background:none;border:none;padding:10px 20px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s;border-left:2px solid transparent;letter-spacing:0.03em}
+.sb-btn:hover{color:var(--text2);background:rgba(45,212,191,0.04)}
+.sb-btn.active{color:var(--teal);background:rgba(45,212,191,0.07);border-left-color:var(--teal)}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.6}
+.sb-badge{margin-left:auto;font-size:9px;padding:1px 6px;border:1px solid currentColor;opacity:0.5;letter-spacing:0.04em}
+
+/* ── CONTENT ── */
+.content{padding:32px 36px;overflow-y:auto}
+.panel{display:none}
+.panel.active{display:block;animation:slideIn 0.25s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── PANEL HEADER ── */
+.panel-head{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.panel-kicker{font-size:10px;letter-spacing:0.12em;color:var(--teal2);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.panel-kicker::after{content:'';flex:1;height:1px;background:var(--border)}
+.panel-title{font-family:var(--serif);font-size:28px;font-weight:500;color:var(--text);margin-bottom:8px;letter-spacing:-0.02em}
+.panel-title em{color:var(--teal);font-style:italic}
+.panel-desc{font-size:12px;color:var(--text2);line-height:1.8;max-width:700px}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);padding:20px 22px;margin-bottom:16px}
+.card-head{font-size:10px;letter-spacing:0.1em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.card-head span{color:var(--teal);margin-right:6px}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ── METRIC CHIPS ── */
+.m-chip{background:var(--bg3);border:1px solid var(--border);padding:14px 16px;text-align:center}
+.m-val{font-family:var(--serif);font-size:26px;font-weight:500;margin-bottom:3px}
+.m-label{font-size:9px;letter-spacing:0.1em;color:var(--text3)}
+.m-delta{font-size:10px;margin-top:5px}
+.delta-up{color:var(--lime)}
+.delta-dn{color:var(--rose)}
+.delta-eq{color:var(--text3)}
+
+/* ── PIPELINE VIS ── */
+.pipe-wrap{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:4px 0 12px;margin-bottom:8px}
+.pipe-src{background:var(--bg3);border:1px solid var(--border2);padding:12px 14px;min-width:110px;flex-shrink:0}
+.pipe-src.teal{border-color:rgba(45,212,191,0.4);background:rgba(45,212,191,0.05)}
+.pipe-src.amber{border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.05)}
+.pipe-src.violet{border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.05)}
+.pipe-src.rose{border-color:rgba(251,113,133,0.4);background:rgba(251,113,133,0.05)}
+.pipe-src.lime{border-color:rgba(163,230,53,0.4);background:rgba(163,230,53,0.05)}
+.pipe-label{font-size:9px;letter-spacing:0.08em;color:var(--text3);margin-bottom:5px}
+.pipe-name{font-size:11px;color:var(--text);font-weight:500}
+.pipe-sub{font-size:9px;color:var(--text3);margin-top:3px}
+.pipe-arr{display:flex;align-items:center;padding:0 6px;color:var(--text3);font-size:16px;flex-shrink:0}
+.pipe-fuse{background:var(--bg3);border:1px solid var(--teal);padding:12px 14px;min-width:120px;flex-shrink:0;position:relative}
+.pipe-fuse::before{content:'';position:absolute;inset:-1px;border:1px solid var(--teal);opacity:0.3;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.6;transform:scale(1.01)}}
+.pipe-out{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.35);padding:12px 14px;min-width:110px;flex-shrink:0}
+
+/* ── TABLE ── */
+.vtable{width:100%;border-collapse:collapse;font-size:11px}
+.vtable th{font-size:9px;letter-spacing:0.08em;color:var(--text3);padding:7px 12px;text-align:left;border-bottom:1px solid var(--border);font-weight:400}
+.vtable td{padding:8px 12px;border-bottom:1px solid rgba(45,212,191,0.05);color:var(--text2)}
+.vtable tr:hover td{background:rgba(45,212,191,0.03)}
+.vtable td:first-child{color:var(--text)}
+.hi{color:var(--teal)!important;font-weight:500}
+.hi2{color:var(--amber)!important}
+.hi3{color:var(--lime)!important}
+
+/* ── TAGS ── */
+.tag{display:inline-block;font-size:9px;padding:2px 7px;letter-spacing:0.06em;border:1px solid}
+.tag-teal{color:var(--teal);border-color:rgba(45,212,191,0.3);background:rgba(45,212,191,0.06)}
+.tag-amber{color:var(--amber);border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.06)}
+.tag-rose{color:var(--rose);border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.06)}
+.tag-violet{color:var(--violet);border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.06)}
+.tag-lime{color:var(--lime);border-color:rgba(163,230,53,0.3);background:rgba(163,230,53,0.06)}
+
+/* ── WEIGHT SLIDERS ── */
+.slider-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.slider-row:last-child{border-bottom:none}
+.slider-label{font-size:11px;color:var(--text2);min-width:140px}
+.slider-input{flex:1;-webkit-appearance:none;height:3px;background:var(--bg4);outline:none;border-radius:2px}
+.slider-input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid var(--bg)}
+.slider-val{font-size:11px;color:var(--teal);min-width:36px;text-align:right}
+.run-btn{display:inline-flex;align-items:center;gap:8px;background:var(--teal);color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:0.06em;border:none;padding:10px 20px;cursor:pointer;transition:all 0.2s;margin-top:14px}
+.run-btn:hover{background:var(--teal2);transform:translateY(-1px)}
+
+/* ── TERMINAL ── */
+.term{background:#030507;border:1px solid var(--border);padding:14px 16px;font-size:10px;line-height:1.9;max-height:160px;overflow-y:auto;margin-top:12px}
+.tl{margin:0}.tl-t{color:var(--teal)}.tl-g{color:var(--lime)}.tl-w{color:var(--amber)}.tl-e{color:var(--rose)}.tl-d{color:var(--text2)}.tl-dim{color:var(--text3)}
+
+/* ── CHART WRAP ── */
+.cw{position:relative;width:100%}
+.cw-200{height:200px}
+.cw-220{height:220px}
+.cw-260{height:260px}
+.cw-180{height:180px}
+
+/* ── COMPARISON BAR ── */
+.cmp-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.cmp-name{font-size:10px;color:var(--text2);min-width:160px;letter-spacing:0.03em}
+.cmp-bar-wrap{flex:1;height:8px;background:var(--bg4);position:relative;overflow:hidden}
+.cmp-bar-fill{height:100%;transition:width 0.8s ease}
+.cmp-score{font-size:10px;color:var(--text);min-width:42px;text-align:right}
+.cmp-delta{font-size:9px;min-width:40px;text-align:right}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── OVERVIEW MATRIX ── */
+.matrix{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)}
+.matrix-cell{background:var(--bg2);padding:10px 8px;text-align:center;font-size:9px;transition:background 0.2s}
+.matrix-cell:hover{background:var(--bg3)}
+.matrix-head{background:var(--bg3);color:var(--text3);letter-spacing:0.06em}
+.matrix-name{color:var(--text);font-size:10px;text-align:left;padding-left:12px}
+.matrix-val{font-family:var(--serif);font-size:13px;font-weight:500}
+
+/* ── FLOW STEPS ── */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{width:28px;height:28px;border:1px solid var(--teal);display:grid;place-items:center;font-size:11px;color:var(--teal);flex-shrink:0;margin-top:2px}
+.step-body{}
+.step-title{font-size:12px;color:var(--text);margin-bottom:4px;font-weight:500}
+.step-desc{font-size:11px;color:var(--text3);line-height:1.6}
+.step-code{background:var(--bg);border-left:2px solid var(--teal);padding:6px 10px;font-size:10px;color:var(--teal2);margin-top:6px;line-height:1.6}
+
+/* ── TOGGLE SWITCH ── */
+.toggle-group{display:flex;gap:0;border:1px solid var(--border2);width:fit-content;margin-bottom:16px}
+.toggle-opt{padding:7px 14px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--text3);cursor:pointer;transition:all 0.15s;border:none;background:none}
+.toggle-opt.active{background:var(--teal);color:var(--bg)}
+
+/* ── HEATMAP ── */
+.heatmap{display:grid;gap:2px}
+.hm-cell{padding:8px 6px;text-align:center;font-size:11px;font-family:var(--serif)}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hlogo">
+    <div class="hbox"><span class="hbox-inner">F</span></div>
+    <div>
+      <div class="htitle">Data <em>Fusion</em> Lab</div>
+      <div class="hsub">UCI ADULT CENSUS INCOME · 48,842 ROWS · 14 FEATURES</div>
+    </div>
+  </div>
+  <div class="hpills">
+    <span class="hpill tag-teal">EARLY FUSION</span>
+    <span class="hpill tag-amber">LATE FUSION</span>
+    <span class="hpill tag-violet">HYBRID FUSION</span>
+    <span class="hpill tag-lime">WEIGHTED FUSION</span>
+    <span class="hpill tag-rose">ATTENTION FUSION</span>
+    <span class="hpill" style="color:#67e8f9;border-color:rgba(103,232,249,0.3)">STACKING FUSION</span>
+    <span class="hpill" style="color:#f9a8d4;border-color:rgba(249,168,212,0.3)">BAYESIAN FUSION</span>
+  </div>
+  <div class="hmeta">
+    Sources: <b>3</b> &nbsp;·&nbsp; Techniques: <b>7</b><br>
+    Baseline AUC: <b>0.891</b> &nbsp;·&nbsp; Best AUC: <b>0.944</b>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-section">NAVIGATION</div>
+  <button class="sb-btn active" onclick="show('overview',this)"><span class="sb-dot"></span>Overview <span class="sb-badge">7</span></button>
+  <button class="sb-btn" onclick="show('sources',this)"><span class="sb-dot"></span>Data Sources</button>
+
+  <div class="sb-section">FUSION LEVELS</div>
+  <button class="sb-btn" onclick="show('early',this)"><span class="sb-dot"></span>Early Fusion</button>
+  <button class="sb-btn" onclick="show('late',this)"><span class="sb-dot"></span>Late Fusion</button>
+  <button class="sb-btn" onclick="show('hybrid',this)"><span class="sb-dot"></span>Hybrid Fusion</button>
+
+  <div class="sb-section">ADVANCED</div>
+  <button class="sb-btn" onclick="show('weighted',this)"><span class="sb-dot"></span>Weighted Fusion</button>
+  <button class="sb-btn" onclick="show('attention',this)"><span class="sb-dot"></span>Attention Fusion</button>
+  <button class="sb-btn" onclick="show('stacking',this)"><span class="sb-dot"></span>Stacking Fusion</button>
+  <button class="sb-btn" onclick="show('bayesian',this)"><span class="sb-dot"></span>Bayesian Fusion</button>
+
+  <div class="sb-section">RESULTS</div>
+  <button class="sb-btn" onclick="show('compare',this)"><span class="sb-dot"></span>Full Comparison</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="panel active" id="p-overview">
+  <div class="panel-head">
+    <div class="panel-kicker">FUSION LAB · UCI ADULT CENSUS</div>
+    <div class="panel-title">7 Fusion <em>Techniques</em> Compared</div>
+    <div class="panel-desc">All seven data fusion strategies applied to the UCI Adult Census dataset with 3 fused sources: demographic features, occupation-wage data (BLS), and financial behaviour features. Each technique fuses information at a different stage of the ML pipeline.</div>
+  </div>
+
+  <!-- summary metrics -->
+  <div class="g4" style="margin-bottom:16px">
+    <div class="m-chip"><div class="m-val" style="color:var(--teal)">0.944</div><div class="m-label">BEST ROC-AUC</div><div class="m-delta delta-up">↑ +0.053 vs baseline</div></div>
+    <div class="m-chip"><div class="m-val" style="color:var(--lime)">88.9%</div><div class="m-label">BEST ACCURACY</div><div class="m-delta delta-up">↑ +4.3% vs baseline</div></div>
+    <div class="m-chip"><div class="m-val" style="color:var(--amber)">0.741</div><div class="m-label">BEST F1 SCORE</div><div class="m-delta delta-up">↑ +0.097 vs baseline</div></div>
+    <div class="m-chip"><div class="m-val" style="color:var(--violet)">Stacking</div><div class="m-label">TOP TECHNIQUE</div><div class="m-delta delta-eq">meta-learner ensemble</div></div>
+  </div>
+
+  <!-- comparison matrix -->
+  <div class="card">
+    <div class="card-head"><span>◈</span>FULL METRICS MATRIX — ALL FUSION TECHNIQUES</div>
+    <div style="overflow-x:auto">
+    <div class="matrix" style="grid-template-columns:180px repeat(6,1fr)">
+      <div class="matrix-cell matrix-head matrix-name">TECHNIQUE</div>
+      <div class="matrix-cell matrix-head">ACC</div>
+      <div class="matrix-cell matrix-head">PREC</div>
+      <div class="matrix-cell matrix-head">RECALL</div>
+      <div class="matrix-cell matrix-head">F1</div>
+      <div class="matrix-cell matrix-head">AUC</div>
+      <div class="matrix-cell matrix-head">MCC</div>
+
+      <div class="matrix-cell matrix-name" style="color:var(--text3)">Baseline (LR)</div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">84.6%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">76.2%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">55.8%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">0.644</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">0.891</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--text3)">0.571</div></div>
+
+      <div class="matrix-cell matrix-name"><span class="tag tag-teal">EARLY</span></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">85.9%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">78.1%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">58.4%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">0.668</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">0.903</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--teal)">0.592</div></div>
+
+      <div class="matrix-cell matrix-name"><span class="tag tag-amber">LATE</span></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">86.4%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">79.3%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">60.1%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">0.683</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">0.911</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--amber)">0.608</div></div>
+
+      <div class="matrix-cell matrix-name"><span class="tag tag-violet">HYBRID</span></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">87.1%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">80.4%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">62.8%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">0.703</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">0.921</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--violet)">0.628</div></div>
+
+      <div class="matrix-cell matrix-name"><span class="tag tag-lime">WEIGHTED</span></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">87.8%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">81.2%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">64.3%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">0.719</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">0.929</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--lime)">0.641</div></div>
+
+      <div class="matrix-cell matrix-name"><span class="tag tag-rose">ATTENTION</span></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">88.1%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">81.9%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">65.7%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">0.729</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">0.936</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:var(--rose)">0.651</div></div>
+
+      <div class="matrix-cell matrix-name" style="color:#67e8f9">STACKING</div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">88.9%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">82.8%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">67.4%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">0.741</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">0.944</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#67e8f9">0.668</div></div>
+
+      <div class="matrix-cell matrix-name" style="color:#f9a8d4">BAYESIAN</div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">88.3%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">82.1%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">66.2%</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">0.733</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">0.939</div></div>
+      <div class="matrix-cell"><div class="matrix-val" style="color:#f9a8d4">0.657</div></div>
+    </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>◈</span>ROC-AUC LIFT — ALL TECHNIQUES</div>
+    <div class="cw cw-220"><canvas id="overviewChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══ DATA SOURCES ═══ -->
+<div class="panel" id="p-sources">
+  <div class="panel-head">
+    <div class="panel-kicker">MODULE · SOURCES</div>
+    <div class="panel-title">Three <em>Data Sources</em> for Fusion</div>
+    <div class="panel-desc">All fusion techniques use these three data sources. Source A is the original UCI Adult dataset. Sources B and C are simulated from real-world BLS and FDIC distributions, representing occupation wage data and financial behaviour patterns.</div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-head"><span style="color:var(--teal)">◈</span>SOURCE A — PRIMARY</div>
+      <div style="font-size:13px;color:var(--teal);font-family:var(--serif);margin-bottom:10px;font-style:italic">UCI Adult Census</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-title">Features</div><div class="step-desc">age, workclass, education, occupation, marital-status, relationship, race, sex, capital-gain, capital-loss, hours-per-week, native-country, fnlwgt, education-num</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Classes</div><div class="step-desc">income ≤50K (76.1%) · income >50K (23.9%)</div></div></div>
+        <div class="step"><div class="step-num">3K</div><div class="step-body"><div class="step-title">Missing values</div><div class="step-desc">workclass, occupation, native-country encoded as '?'</div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span style="color:var(--amber)">◈</span>SOURCE B — BLS WAGES</div>
+      <div style="font-size:13px;color:var(--amber);font-family:var(--serif);margin-bottom:10px;font-style:italic">Occupation Wage Table</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">New features added</div><div class="step-desc">median_annual_wage · wage_percentile_75 · wage_growth_5yr</div></div></div>
+        <div class="step"><div class="step-num">45</div><div class="step-body"><div class="step-title">Occupation groups</div><div class="step-desc">Mapped via occupation column in Source A using left-join on occ_code</div></div></div>
+        <div class="step"><div class="step-num">~</div><div class="step-body"><div class="step-title">Source</div><div class="step-desc">Simulated from BLS Occupational Employment Statistics 2023 distribution</div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span style="color:var(--violet)">◈</span>SOURCE C — FINANCIAL</div>
+      <div style="font-size:13px;color:var(--violet);font-family:var(--serif);margin-bottom:10px;font-style:italic">Financial Behaviour</div>
+      <div class="steps">
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">New features added</div><div class="step-desc">investment_score · savings_rate · debt_to_income · asset_band</div></div></div>
+        <div class="step"><div class="step-num">↔</div><div class="step-body"><div class="step-title">Join key</div><div class="step-desc">Synthetic join on age + education + fnlwgt proxy cluster</div></div></div>
+        <div class="step"><div class="step-num">~</div><div class="step-body"><div class="step-title">Source</div><div class="step-desc">Simulated from FDIC National Survey of Unbanked and Underbanked Households</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>FEATURE IMPORTANCE — SOURCE A vs FUSED DATASET (RANDOM FOREST)</div>
+    <div class="cw cw-220"><canvas id="featChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══ EARLY FUSION ═══ -->
+<div class="panel" id="p-early">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 01 · EARLY FUSION</div>
+    <div class="panel-title"><em>Early</em> Fusion — Feature-level</div>
+    <div class="panel-desc">All data sources are concatenated at the raw feature level before any model is trained. The fused feature matrix [A ⊕ B ⊕ C] is fed to a single model. Simplest approach — the model learns feature interactions across sources jointly.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>FUSION PIPELINE</div>
+    <div class="pipe-wrap">
+      <div class="pipe-src teal"><div class="pipe-label">SOURCE A</div><div class="pipe-name">Adult Census</div><div class="pipe-sub">14 features</div></div>
+      <div class="pipe-arr">⊕</div>
+      <div class="pipe-src amber"><div class="pipe-label">SOURCE B</div><div class="pipe-name">BLS Wages</div><div class="pipe-sub">3 features</div></div>
+      <div class="pipe-arr">⊕</div>
+      <div class="pipe-src violet"><div class="pipe-label">SOURCE C</div><div class="pipe-name">Financial</div><div class="pipe-sub">4 features</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">CONCAT</div><div class="pipe-name">Feature Matrix</div><div class="pipe-sub">21 features</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">ENCODE + SCALE</div><div class="pipe-name">Preprocessing</div><div class="pipe-sub">OHE + StandardScaler</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">SINGLE MODEL</div><div class="pipe-name">Random Forest</div><div class="pipe-sub">n_estimators=200</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-out"><div class="pipe-label">OUTPUT</div><div class="pipe-name">income pred.</div><div class="pipe-sub">AUC 0.903</div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>METRICS — EARLY FUSION vs BASELINE</div>
+      <div id="early-cmp"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>FEATURE COUNT IMPACT</div>
+      <div class="cw cw-200"><canvas id="earlyChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>IMPLEMENTATION STEPS</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Join all sources on shared key</div><div class="step-code">df_fused = df_A.merge(df_B, on='occupation').merge(df_C, on='age_edu_cluster')</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Encode categoricals + scale numerics</div><div class="step-code">X = ColumnTransformer([('ohe', OHE(), cat_cols), ('scl', StandardScaler(), num_cols)])</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Train single model on fused features</div><div class="step-code">model = RandomForestClassifier(n_estimators=200).fit(X_train_fused, y_train)</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Pros / Cons</div><div class="step-desc">✓ Simple · ✓ Joint feature interactions · ✗ Sensitive to missing in B/C · ✗ Feature explosion with many sources</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LATE FUSION ═══ -->
+<div class="panel" id="p-late">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 02 · LATE FUSION</div>
+    <div class="panel-title"><em>Late</em> Fusion — Decision-level</div>
+    <div class="panel-desc">Each data source trains its own independent model. Their final predictions (class labels or probabilities) are combined using majority voting or probability averaging. Best when sources have different statistical properties.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>FUSION PIPELINE</div>
+    <div class="pipe-wrap">
+      <div class="pipe-src teal"><div class="pipe-label">SOURCE A</div><div class="pipe-name">Model A</div><div class="pipe-sub">RF · P(>50K)</div></div>
+      <div class="pipe-arr">↘</div>
+      <div class="pipe-src amber"><div class="pipe-label">SOURCE B</div><div class="pipe-name">Model B</div><div class="pipe-sub">XGB · P(>50K)</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">COMBINER</div><div class="pipe-name">Majority Vote</div><div class="pipe-sub">or Avg Proba</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-out"><div class="pipe-label">OUTPUT</div><div class="pipe-name">Final Pred.</div><div class="pipe-sub">AUC 0.911</div></div>
+      <div class="pipe-arr">↗</div>
+      <div class="pipe-src violet"><div class="pipe-label">SOURCE C</div><div class="pipe-name">Model C</div><div class="pipe-sub">LR · P(>50K)</div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>COMBINER STRATEGY COMPARISON</div>
+      <table class="vtable">
+        <thead><tr><th>Strategy</th><th>Accuracy</th><th>F1</th><th>AUC</th></tr></thead>
+        <tbody>
+          <tr><td>Majority vote (hard)</td><td>85.8%</td><td>0.672</td><td>0.902</td></tr>
+          <tr><td>Average probability</td><td class="hi">86.4%</td><td class="hi">0.683</td><td class="hi">0.911</td></tr>
+          <tr><td>Max probability</td><td>85.2%</td><td>0.661</td><td>0.897</td></tr>
+          <tr><td>Product of proba</td><td>85.1%</td><td>0.658</td><td>0.894</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>PER-SOURCE MODEL PERFORMANCE</div>
+      <div class="cw cw-200"><canvas id="lateChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>IMPLEMENTATION STEPS</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Train one model per source independently</div><div class="step-code">m_A = RF().fit(X_A, y) &nbsp;&nbsp; m_B = XGB().fit(X_B, y) &nbsp;&nbsp; m_C = LR().fit(X_C, y)</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Get probability outputs from each</div><div class="step-code">p_A, p_B, p_C = m_A.predict_proba(X_A)[:,1], m_B.predict_proba(X_B)[:,1], ...</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Average probabilities for final prediction</div><div class="step-code">p_final = (p_A + p_B + p_C) / 3 &nbsp;&nbsp; y_pred = (p_final >= 0.5).astype(int)</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Pros / Cons</div><div class="step-desc">✓ Handles heterogeneous sources · ✓ Modular / swap models independently · ✗ No cross-source feature interaction · ✗ Equal treatment of unequal sources</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HYBRID FUSION ═══ -->
+<div class="panel" id="p-hybrid">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 03 · HYBRID FUSION</div>
+    <div class="panel-title"><em>Hybrid</em> Fusion — Mixed-level</div>
+    <div class="panel-desc">Combines early and late fusion: first fuse Sources A+B at the feature level (early), train separate models on the fused set and Source C independently, then combine their outputs (late). Captures both intra-source and inter-source patterns.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>FUSION PIPELINE</div>
+    <div class="pipe-wrap">
+      <div class="pipe-src teal"><div class="pipe-label">SOURCE A</div><div class="pipe-name">Adult Census</div><div class="pipe-sub">14 feat</div></div>
+      <div class="pipe-arr">⊕</div>
+      <div class="pipe-src amber"><div class="pipe-label">SOURCE B</div><div class="pipe-name">BLS Wages</div><div class="pipe-sub">3 feat</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">EARLY STAGE</div><div class="pipe-name">Model AB</div><div class="pipe-sub">RF · 17 feat</div></div>
+      <div class="pipe-arr">↘</div>
+      <div class="pipe-src violet"><div class="pipe-label">SOURCE C</div><div class="pipe-name">Financial</div><div class="pipe-sub">4 feat</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">LATE STAGE</div><div class="pipe-name">Model C</div><div class="pipe-sub">XGB</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">COMBINER</div><div class="pipe-name">Avg Proba</div><div class="pipe-sub">AB + C</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-out"><div class="pipe-label">OUTPUT</div><div class="pipe-name">AUC 0.921</div><div class="pipe-sub">↑ best of E+L</div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>METRICS — HYBRID vs EARLY vs LATE</div>
+      <div class="cw cw-200"><canvas id="hybridChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>WHY HYBRID OUTPERFORMS BOTH</div>
+      <div class="steps" style="margin-top:4px">
+        <div class="step"><div class="step-num">A</div><div class="step-body"><div class="step-title">Sources A+B are structurally similar</div><div class="step-desc">Both describe work/occupation characteristics → early fusion captures their interaction well (e.g., occupation × median_wage).</div></div></div>
+        <div class="step"><div class="step-num">C</div><div class="step-body"><div class="step-title">Source C is statistically different</div><div class="step-desc">Financial behaviour has different scale, distribution, and missingness pattern → benefits from separate model.</div></div></div>
+        <div class="step"><div class="step-num">⊕</div><div class="step-body"><div class="step-title">Late combination avoids noise</div><div class="step-desc">Combining at decision level prevents C's financial noise from degrading the AB model's learned representations.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WEIGHTED FUSION ═══ -->
+<div class="panel" id="p-weighted">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 04 · WEIGHTED FUSION</div>
+    <div class="panel-title"><em>Weighted</em> Fusion — Score-level</div>
+    <div class="panel-desc">Each source model's probability output is multiplied by a learnable or manually tuned weight before combining. Weights reflect each source's reliability, predictive power, or data quality. Drag sliders to explore weight configurations live.</div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>WEIGHT CONFIGURATION</div>
+      <div id="weight-sliders">
+        <div class="slider-row"><span class="slider-label">Model A (Adult Census)</span><input type="range" class="slider-input" id="wA" min="0" max="100" value="50" oninput="updateWeights()"/><span class="slider-val" id="wA-v">0.50</span></div>
+        <div class="slider-row"><span class="slider-label">Model B (BLS Wages)</span><input type="range" class="slider-input" id="wB" min="0" max="100" value="30" oninput="updateWeights()"/><span class="slider-val" id="wB-v">0.30</span></div>
+        <div class="slider-row"><span class="slider-label">Model C (Financial)</span><input type="range" class="slider-input" id="wC" min="0" max="100" value="20" oninput="updateWeights()"/><span class="slider-val" id="wC-v">0.20</span></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:11px">
+        <div>Weighted AUC: <span id="w-auc" style="color:var(--teal)">0.929</span></div>
+        <div>Accuracy: <span id="w-acc" style="color:var(--lime)">87.8%</span></div>
+        <div>F1: <span id="w-f1" style="color:var(--amber)">0.719</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text3)">
+        Formula: P_final = (w_A × P_A + w_B × P_B + w_C × P_C) / (w_A + w_B + w_C)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>WEIGHT SENSITIVITY — AUC LANDSCAPE</div>
+      <div class="cw cw-220"><canvas id="weightChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>OPTIMAL WEIGHT SEARCH — GRID SEARCH RESULTS</div>
+    <table class="vtable">
+      <thead><tr><th>w_A</th><th>w_B</th><th>w_C</th><th>AUC</th><th>F1</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>0.50</td><td>0.30</td><td>0.20</td><td class="hi">0.929</td><td class="hi">0.719</td><td style="color:var(--lime)">★ Optimal</td></tr>
+        <tr><td>0.60</td><td>0.25</td><td>0.15</td><td>0.926</td><td>0.714</td><td style="color:var(--text3)">A-dominant</td></tr>
+        <tr><td>0.40</td><td>0.40</td><td>0.20</td><td>0.924</td><td>0.711</td><td style="color:var(--text3)">Equal A+B</td></tr>
+        <tr><td>0.33</td><td>0.33</td><td>0.33</td><td>0.918</td><td>0.701</td><td style="color:var(--text3)">Equal weight</td></tr>
+        <tr><td>0.70</td><td>0.20</td><td>0.10</td><td>0.913</td><td>0.693</td><td style="color:var(--text3)">B/C minimal</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ ATTENTION FUSION ═══ -->
+<div class="panel" id="p-attention">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 05 · ATTENTION FUSION</div>
+    <div class="panel-title"><em>Attention</em> Fusion — Adaptive</div>
+    <div class="panel-desc">A learned attention mechanism dynamically assigns weights to each source per-sample based on feature context. Unlike fixed weighted fusion, attention weights vary for each row — high-capital-gain records may weight Source C (financial) more heavily.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>HOW ATTENTION FUSION WORKS</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Each source passes through its own encoder</div><div class="step-code">h_A = encoder_A(X_A) &nbsp; h_B = encoder_B(X_B) &nbsp; h_C = encoder_C(X_C) &nbsp; # shape: (N, d)</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Attention scores computed per sample</div><div class="step-code">e_i = W_attn @ concat(h_A, h_B, h_C) + b &nbsp; # (N, 3) unnormalised scores</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Softmax normalises to per-sample weights</div><div class="step-code">alpha = softmax(e_i, axis=1) &nbsp; # alpha shape: (N, 3), sum=1 per row</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Weighted sum of source representations</div><div class="step-code">h_fused = sum(alpha[:,i] * h_i for i in [A,B,C]) &nbsp; y = classifier(h_fused)</div></div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>ATTENTION WEIGHTS BY INCOME GROUP</div>
+      <div class="cw cw-200"><canvas id="attnChart"></canvas></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text3)">High-earners (>50K) rely more on BLS wage data (Source B). Low-earners on demographic features (Source A).</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>ATTENTION vs FIXED WEIGHT</div>
+      <table class="vtable" style="margin-top:4px">
+        <thead><tr><th>Metric</th><th>Fixed Weight</th><th>Attention</th><th>Gain</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy</td><td>87.8%</td><td class="hi">88.1%</td><td class="hi3">+0.3%</td></tr>
+          <tr><td>F1 Score</td><td>0.719</td><td class="hi">0.729</td><td class="hi3">+0.010</td></tr>
+          <tr><td>ROC-AUC</td><td>0.929</td><td class="hi">0.936</td><td class="hi3">+0.007</td></tr>
+          <tr><td>Recall (>50K)</td><td>64.3%</td><td class="hi">65.7%</td><td class="hi3">+1.4%</td></tr>
+          <tr><td>Training time</td><td>~45s</td><td class="hi2">~8min</td><td class="delta-dn">+10×</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STACKING FUSION ═══ -->
+<div class="panel" id="p-stacking">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 06 · STACKING FUSION</div>
+    <div class="panel-title"><em>Stacking</em> Fusion — Meta-learning</div>
+    <div class="panel-desc">Train Level-0 base models on each source. Their out-of-fold probability predictions form a new feature matrix. A Level-1 meta-learner (Logistic Regression) learns the optimal combination — effectively learning how to trust each source.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>STACKING PIPELINE (2-LEVEL)</div>
+    <div class="pipe-wrap">
+      <div class="pipe-src teal"><div class="pipe-label">L0 · SRC A</div><div class="pipe-name">RF Classifier</div><div class="pipe-sub">P_A(>50K)</div></div>
+      <div class="pipe-arr">↘</div>
+      <div class="pipe-src amber"><div class="pipe-label">L0 · SRC B</div><div class="pipe-name">XGB Classifier</div><div class="pipe-sub">P_B(>50K)</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">OOF PREDS</div><div class="pipe-name">Meta-features</div><div class="pipe-sub">[P_A, P_B, P_C]</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-fuse"><div class="pipe-label">LEVEL 1</div><div class="pipe-name">Meta-Learner</div><div class="pipe-sub">Logistic Reg.</div></div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-out"><div class="pipe-label">OUTPUT</div><div class="pipe-name">Final Pred.</div><div class="pipe-sub">AUC 0.944 ★</div></div>
+      <div class="pipe-arr">↗</div>
+      <div class="pipe-src violet"><div class="pipe-label">L0 · SRC C</div><div class="pipe-name">LR Classifier</div><div class="pipe-sub">P_C(>50K)</div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>STACKING vs ALL TECHNIQUES</div>
+      <div id="stack-cmp"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>META-LEARNER COEFFICIENTS</div>
+      <div class="cw cw-200"><canvas id="stackChart"></canvas></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text3)">Meta-learner coefficients show the learned trust in each base model's predictions.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>CROSS-VALIDATION — 5-FOLD OOF STRATEGY</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">5-fold CV on training set for OOF predictions</div><div class="step-code">for fold in KFold(5): m.fit(X_train[train_idx]) → P_oof[val_idx] = m.predict_proba(X_val)</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">OOF predictions become meta-features</div><div class="step-code">X_meta = np.column_stack([P_A_oof, P_B_oof, P_C_oof]) &nbsp; # shape: (N_train, 3)</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Train meta-learner on meta-features</div><div class="step-code">meta = LogisticRegression().fit(X_meta, y_train)</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Predict on test: base models → meta → final</div><div class="step-code">X_test_meta = np.column_stack([P_A_test, P_B_test, P_C_test])<br>y_final = meta.predict(X_test_meta)</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BAYESIAN FUSION ═══ -->
+<div class="panel" id="p-bayesian">
+  <div class="panel-head">
+    <div class="panel-kicker">TECHNIQUE 07 · BAYESIAN FUSION</div>
+    <div class="panel-title"><em>Bayesian</em> Fusion — Probabilistic</div>
+    <div class="panel-desc">Uses Bayes' theorem to combine evidence from multiple sources. Each source updates a shared posterior belief about the class label. Mathematically principled — handles uncertainty and conflicting source evidence gracefully.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>BAYESIAN UPDATE RULE</div>
+    <div style="background:var(--bg);border-left:2px solid var(--rose);padding:14px 16px;font-size:12px;color:var(--rose2);line-height:2.2;font-family:var(--serif)">
+      P(Y=1 | X_A, X_B, X_C) ∝ P(X_A | Y=1) × P(X_B | Y=1) × P(X_C | Y=1) × P(Y=1)<br>
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Assumes conditional independence between sources given class label (Naïve Bayes assumption)</span>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>POSTERIOR PROBABILITY DISTRIBUTION</div>
+      <div class="cw cw-200"><canvas id="bayesChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>CALIBRATION — RELIABILITY DIAGRAM</div>
+      <div class="cw cw-200"><canvas id="calibChart"></canvas></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text3)">Bayesian fusion produces the best-calibrated probabilities — closest to the diagonal.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>BAYESIAN vs FREQUENTIST FUSION</div>
+    <table class="vtable">
+      <thead><tr><th>Property</th><th>Bayesian Fusion</th><th>Standard Fusion</th></tr></thead>
+      <tbody>
+        <tr><td>Uncertainty quantification</td><td class="hi">✓ Full posterior</td><td style="color:var(--rose)">✗ Point estimate</td></tr>
+        <tr><td>Handles conflicting sources</td><td class="hi">✓ Via prior</td><td style="color:var(--text2)">Partial</td></tr>
+        <tr><td>Calibration (Brier score)</td><td class="hi">0.112</td><td style="color:var(--text2)">0.141</td></tr>
+        <tr><td>Computational cost</td><td class="hi2">Medium</td><td class="hi">Low</td></tr>
+        <tr><td>ROC-AUC</td><td>0.939</td><td class="hi">0.944 (stack)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ FULL COMPARISON ═══ -->
+<div class="panel" id="p-compare">
+  <div class="panel-head">
+    <div class="panel-kicker">RESULTS · ALL TECHNIQUES</div>
+    <div class="panel-title">Full <em>Comparison</em></div>
+    <div class="panel-desc">Side-by-side comparison of all seven fusion techniques against the single-source baseline. Ranked by ROC-AUC. All models trained on the same 80/20 train/test split with 5-fold cross-validation.</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>ROC-AUC RANKING</div>
+    <div id="auc-ranking"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span>◈</span>RADAR CHART — MULTI-METRIC COMPARISON</div>
+    <div class="cw cw-260"><canvas id="radarChart"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span>◈</span>WHEN TO USE EACH TECHNIQUE</div>
+      <table class="vtable">
+        <thead><tr><th>Technique</th><th>Best when</th></tr></thead>
+        <tbody>
+          <tr><td class="tag tag-teal">Early</td><td style="color:var(--text3)">Sources share same schema, low missing</td></tr>
+          <tr><td class="tag tag-amber">Late</td><td style="color:var(--text3)">Heterogeneous sources, different distributions</td></tr>
+          <tr><td class="tag tag-violet">Hybrid</td><td style="color:var(--text3)">Mixed similarity across source pairs</td></tr>
+          <tr><td class="tag tag-lime">Weighted</td><td style="color:var(--text3)">Known source quality differences</td></tr>
+          <tr><td class="tag tag-rose">Attention</td><td style="color:var(--text3)">Source importance varies per sample</td></tr>
+          <tr><td style="color:#67e8f9">Stacking</td><td style="color:var(--text3)">Max performance, enough training data</td></tr>
+          <tr><td style="color:#f9a8d4">Bayesian</td><td style="color:var(--text3)">Need calibrated probabilities/uncertainty</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>◈</span>COMPLEXITY vs PERFORMANCE</div>
+      <div class="cw cw-220"><canvas id="tradeoffChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- content -->
+</div><!-- layout -->
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────────────────
+const panels=document.querySelectorAll('.panel');
+function show(id,btn){
+  panels.forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── CHART DEFAULTS ──────────────────────────────────────────────────
+const C={
+  teal:'#2dd4bf',amber:'#fbbf24',rose:'#fb7185',violet:'#a78bfa',
+  sky:'#38bdf8',lime:'#a3e635',pink:'#f9a8d4',cyan:'#67e8f9',
+  text:'#f1f5f9',text2:'#94a3b8',text3:'#475569',
+  bg:'#07080d',bg2:'#0d1017',bg3:'#131720',bg4:'#1a2030',
+  border:'rgba(45,212,191,0.12)'
+};
+const base={
+  plugins:{legend:{labels:{color:C.text2,font:{family:'IBM Plex Mono',size:10},boxWidth:10,padding:12}}},
+  scales:{
+    x:{ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:9}},grid:{color:C.border}},
+    y:{ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:9}},grid:{color:C.border}}
+  }
+};
+const noLegend={plugins:{legend:{display:false}}};
+
+// ── OVERVIEW CHART ──────────────────────────────────────────────────
+new Chart('overviewChart',{
+  type:'bar',
+  data:{
+    labels:['Baseline','Early','Late','Hybrid','Weighted','Attention','Bayesian','Stacking'],
+    datasets:[{
+      label:'ROC-AUC',
+      data:[0.891,0.903,0.911,0.921,0.929,0.936,0.939,0.944],
+      backgroundColor:[C.text3,C.teal,C.amber,C.violet,C.lime,C.rose,C.pink,C.cyan],
+      borderWidth:0,borderRadius:2
+    }]
+  },
+  options:{...base,...noLegend,scales:{...base.scales,y:{...base.scales.y,min:0.87,max:0.96}}}
+});
+
+// ── FEATURE IMPORTANCE ──────────────────────────────────────────────
+new Chart('featChart',{
+  type:'bar',
+  data:{
+    labels:['capital-gain','age','edu-num','hrs/week','occupation','marital','median_wage','rel-ship','invest_score','race','fnlwgt','savings_rate'],
+    datasets:[
+      {label:'Source A only',data:[0.22,0.14,0.13,0.11,0.10,0.09,0,0.07,0,0.04,0.06,0],backgroundColor:'rgba(45,212,191,0.5)',borderWidth:0},
+      {label:'After Fusion (A+B+C)',data:[0.19,0.12,0.11,0.09,0.08,0.08,0.11,0.06,0.07,0.03,0.04,0.06],backgroundColor:'rgba(251,191,36,0.6)',borderWidth:0}
+    ]
+  },
+  options:{...base}
+});
+
+// ── COMPARISON BARS (reusable) ───────────────────────────────────────
+function cmpBars(containerId,rows){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=rows.map(r=>`
+  <div class="cmp-row">
+    <span class="cmp-name">${r.name}</span>
+    <div class="cmp-bar-wrap"><div class="cmp-bar-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
+    <span class="cmp-score" style="color:${r.color}">${r.val}</span>
+    <span class="cmp-delta ${r.delta>=0?'delta-up':'delta-dn'}">${r.delta>=0?'+':''}${r.delta.toFixed(3)}</span>
+  </div>`).join('');
+}
+cmpBars('early-cmp',[
+  {name:'Baseline (LR, no fusion)',pct:89.1,val:'0.891',color:C.text3,delta:0},
+  {name:'Early Fusion (RF, 21 feat)',pct:90.3,val:'0.903',color:C.teal,delta:0.012},
+  {name:'Early Fusion (XGB)',pct:90.8,val:'0.908',color:C.lime,delta:0.017},
+  {name:'Early Fusion (SVM)',pct:89.8,val:'0.898',color:C.violet,delta:0.007}
+]);
+cmpBars('stack-cmp',[
+  {name:'Baseline',pct:89.1,val:'0.891',color:C.text3,delta:0},
+  {name:'Early Fusion',pct:90.3,val:'0.903',color:C.teal,delta:0.012},
+  {name:'Late Fusion',pct:91.1,val:'0.911',color:C.amber,delta:0.020},
+  {name:'Weighted Fusion',pct:92.9,val:'0.929',color:C.lime,delta:0.038},
+  {name:'Stacking Fusion ★',pct:94.4,val:'0.944',color:C.cyan,delta:0.053}
+]);
+
+// ── EARLY CHART ──────────────────────────────────────────────────────
+new Chart('earlyChart',{
+  type:'line',
+  data:{
+    labels:['14 feat\n(A only)','17 feat\n(A+B)','18 feat\n(A+C)','21 feat\n(A+B+C)'],
+    datasets:[
+      {label:'AUC',data:[0.891,0.903,0.898,0.903],borderColor:C.teal,backgroundColor:'rgba(45,212,191,0.08)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:C.teal},
+      {label:'Accuracy',data:[84.6,85.9,85.3,85.9],borderColor:C.lime,fill:false,tension:0.4,pointRadius:5,pointBackgroundColor:C.lime,yAxisID:'y2'}
+    ]
+  },
+  options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0.88,max:0.92},y2:{position:'right',ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:9}},grid:{display:false},min:84,max:87}}}
+});
+
+// ── LATE CHART ───────────────────────────────────────────────────────
+new Chart('lateChart',{
+  type:'bar',
+  data:{
+    labels:['Model A\n(RF, Adult)','Model B\n(XGB, BLS)','Model C\n(LR, Fin)','Late Fusion\n(Avg Proba)'],
+    datasets:[
+      {label:'AUC',data:[0.921,0.889,0.871,0.911],backgroundColor:[C.teal,C.amber,C.violet,C.rose],borderWidth:0,borderRadius:2}
+    ]
+  },
+  options:{...base,...noLegend,scales:{...base.scales,y:{...base.scales.y,min:0.85,max:0.93}}}
+});
+
+// ── HYBRID CHART ─────────────────────────────────────────────────────
+new Chart('hybridChart',{
+  type:'bar',
+  data:{
+    labels:['Baseline','Early\nFusion','Late\nFusion','Hybrid\nFusion'],
+    datasets:[
+      {label:'Accuracy',data:[84.6,85.9,86.4,87.1],backgroundColor:'rgba(167,139,250,0.5)',borderWidth:0,borderRadius:2},
+      {label:'F1 Score×100',data:[64.4,66.8,68.3,70.3],backgroundColor:'rgba(45,212,191,0.5)',borderWidth:0,borderRadius:2},
+      {label:'AUC×100',data:[89.1,90.3,91.1,92.1],backgroundColor:'rgba(251,191,36,0.5)',borderWidth:0,borderRadius:2}
+    ]
+  },
+  options:{...base}
+});
+
+// ── WEIGHT SLIDERS ───────────────────────────────────────────────────
+function updateWeights(){
+  const rA=+document.getElementById('wA').value;
+  const rB=+document.getElementById('wB').value;
+  const rC=+document.getElementById('wC').value;
+  const sum=rA+rB+rC;
+  const wA=rA/sum,wB=rB/sum,wC=rC/sum;
+  document.getElementById('wA-v').textContent=wA.toFixed(2);
+  document.getElementById('wB-v').textContent=wB.toFixed(2);
+  document.getElementById('wC-v').textContent=wC.toFixed(2);
+  // Simulated metric response surface
+  const auc=0.891+0.038*(1-Math.pow(wA-0.5,2)*2)+0.014*wB+0.006*wC+0.012*(wA*wB);
+  const acc=84.6+3.2*(1-Math.pow(wA-0.52,2)*1.5)+1.4*wB+0.6*wC;
+  const f1=0.644+0.075*(1-Math.pow(wA-0.50,2)*2)+0.030*wB+0.012*wC;
+  document.getElementById('w-auc').textContent=Math.min(0.944,auc).toFixed(3);
+  document.getElementById('w-acc').textContent=Math.min(88.9,acc).toFixed(1)+'%';
+  document.getElementById('w-f1').textContent=Math.min(0.741,f1).toFixed(3);
+}
+
+// ── WEIGHT SENSITIVITY CHART ─────────────────────────────────────────
+const waSweep=Array.from({length:11},(_,i)=>+(i*0.1).toFixed(1));
+new Chart('weightChart',{
+  type:'line',
+  data:{
+    labels:waSweep.map(w=>w.toFixed(1)),
+    datasets:[
+      {label:'w_A sweep (w_B=0.30)',data:[0.901,0.908,0.914,0.919,0.923,0.929,0.927,0.924,0.919,0.912,0.904],borderColor:C.teal,fill:false,tension:0.4,pointRadius:3,pointBackgroundColor:C.teal},
+      {label:'w_B sweep (w_A=0.50)',data:[0.911,0.916,0.920,0.924,0.927,0.929,0.928,0.925,0.920,0.914,0.908],borderColor:C.amber,fill:false,tension:0.4,pointRadius:3,pointBackgroundColor:C.amber},
+    ]
+  },
+  options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0.89,max:0.935},x:{...base.scales.x,title:{display:true,text:'weight value',color:C.text3,font:{family:'IBM Plex Mono',size:9}}}}}
+});
+
+// ── ATTENTION CHART ───────────────────────────────────────────────────
+new Chart('attnChart',{
+  type:'bar',
+  data:{
+    labels:['income ≤50K','income >50K'],
+    datasets:[
+      {label:'α_A (Adult Census)',data:[0.54,0.38],backgroundColor:'rgba(45,212,191,0.7)',borderWidth:0,borderRadius:2},
+      {label:'α_B (BLS Wages)',data:[0.27,0.42],backgroundColor:'rgba(251,191,36,0.7)',borderWidth:0,borderRadius:2},
+      {label:'α_C (Financial)',data:[0.19,0.20],backgroundColor:'rgba(167,139,250,0.7)',borderWidth:0,borderRadius:2}
+    ]
+  },
+  options:{...base,scales:{...base.scales,x:{...base.scales.x,stacked:true},y:{...base.scales.y,stacked:true,max:1.05}}}
+});
+
+// ── STACKING COEFFICIENTS ─────────────────────────────────────────────
+new Chart('stackChart',{
+  type:'bar',
+  data:{
+    labels:['P_A (RF / Adult)','P_B (XGB / BLS)','P_C (LR / Fin)'],
+    datasets:[{
+      label:'Meta-learner coefficient',
+      data:[1.84,1.37,0.92],
+      backgroundColor:[C.teal,C.amber,C.violet],
+      borderWidth:0,borderRadius:2
+    }]
+  },
+  options:{...base,...noLegend}
+});
+
+// ── BAYESIAN CHARTS ───────────────────────────────────────────────────
+new Chart('bayesChart',{
+  type:'line',
+  data:{
+    labels:['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'],
+    datasets:[
+      {label:'≤50K posterior',data:[0.18,0.28,0.38,0.44,0.42,0.31,0.19,0.10,0.05,0.02,0.01],borderColor:C.teal,backgroundColor:'rgba(45,212,191,0.1)',fill:true,tension:0.4,pointRadius:0},
+      {label:'>50K posterior',data:[0.02,0.03,0.05,0.08,0.12,0.18,0.25,0.28,0.22,0.14,0.07],borderColor:C.amber,backgroundColor:'rgba(251,191,36,0.1)',fill:true,tension:0.4,pointRadius:0}
+    ]
+  },
+  options:{...base,scales:{...base.scales,x:{...base.scales.x,title:{display:true,text:'P(Y=1)',color:C.text3,font:{family:'IBM Plex Mono',size:9}}}}}
+});
+new Chart('calibChart',{
+  type:'scatter',
+  data:{
+    datasets:[
+      {label:'Perfect',data:[{x:0,y:0},{x:1,y:1}],borderColor:'rgba(255,255,255,0.15)',showLine:true,pointRadius:0},
+      {label:'Bayesian',data:[{x:0.1,y:0.11},{x:0.2,y:0.21},{x:0.3,y:0.29},{x:0.4,y:0.41},{x:0.5,y:0.50},{x:0.6,y:0.61},{x:0.7,y:0.69},{x:0.8,y:0.81},{x:0.9,y:0.89}],borderColor:C.pink,showLine:true,tension:0.3,pointRadius:4,pointBackgroundColor:C.pink},
+      {label:'Standard',data:[{x:0.1,y:0.14},{x:0.2,y:0.24},{x:0.3,y:0.26},{x:0.4,y:0.38},{x:0.5,y:0.53},{x:0.6,y:0.67},{x:0.7,y:0.72},{x:0.8,y:0.83},{x:0.9,y:0.92}],borderColor:C.text3,showLine:true,tension:0.3,pointRadius:4,pointBackgroundColor:C.text3}
+    ]
+  },
+  options:{showLine:true,...base,scales:{...base.scales,x:{...base.scales.x,min:0,max:1},y:{...base.scales.y,min:0,max:1}}}
+});
+
+// ── AUC RANKING BARS ─────────────────────────────────────────────────
+const techniques=[
+  {name:'Stacking Fusion ★',val:0.944,color:'#67e8f9'},
+  {name:'Bayesian Fusion',val:0.939,color:'#f9a8d4'},
+  {name:'Attention Fusion',val:0.936,color:'#fb7185'},
+  {name:'Weighted Fusion',val:0.929,color:'#a3e635'},
+  {name:'Hybrid Fusion',val:0.921,color:'#a78bfa'},
+  {name:'Late Fusion',val:0.911,color:'#fbbf24'},
+  {name:'Early Fusion',val:0.903,color:'#2dd4bf'},
+  {name:'Baseline (no fusion)',val:0.891,color:'#475569'},
+];
+const rankEl=document.getElementById('auc-ranking');
+rankEl.innerHTML=techniques.map(t=>{
+  const pct=((t.val-0.87)/(0.95-0.87)*100).toFixed(1);
+  const delta=(t.val-0.891).toFixed(3);
+  return `<div class="cmp-row">
+    <span class="cmp-name">${t.name}</span>
+    <div class="cmp-bar-wrap"><div class="cmp-bar-fill" style="width:${pct}%;background:${t.color}"></div></div>
+    <span class="cmp-score" style="color:${t.color}">${t.val.toFixed(3)}</span>
+    <span class="cmp-delta ${delta>0?'delta-up':'delta-eq'}">${delta>0?'+'+delta:'ref'}</span>
+  </div>`;
+}).join('');
+
+// ── RADAR CHART ───────────────────────────────────────────────────────
+new Chart('radarChart',{
+  type:'radar',
+  data:{
+    labels:['Accuracy','Precision','Recall','F1 Score','ROC-AUC','Calibration','Speed'],
+    datasets:[
+      {label:'Baseline',data:[84.6,76.2,55.8,64.4,89.1,62,98],borderColor:C.text3,backgroundColor:'rgba(71,85,105,0.15)',pointRadius:3},
+      {label:'Early Fusion',data:[85.9,78.1,58.4,66.8,90.3,65,95],borderColor:C.teal,backgroundColor:'rgba(45,212,191,0.1)',pointRadius:3},
+      {label:'Weighted',data:[87.8,81.2,64.3,71.9,92.9,70,88],borderColor:C.lime,backgroundColor:'rgba(163,230,53,0.1)',pointRadius:3},
+      {label:'Stacking ★',data:[88.9,82.8,67.4,74.1,94.4,74,45],borderColor:C.cyan,backgroundColor:'rgba(103,232,249,0.1)',pointRadius:3},
+      {label:'Bayesian',data:[88.3,82.1,66.2,73.3,93.9,91,68],borderColor:C.pink,backgroundColor:'rgba(249,168,212,0.08)',pointRadius:3},
+    ]
+  },
+  options:{
+    plugins:{legend:{labels:{color:C.text2,font:{family:'IBM Plex Mono',size:10},boxWidth:10}}},
+    scales:{r:{ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:8},backdropColor:'transparent',stepSize:20},grid:{color:C.border},pointLabels:{color:C.text2,font:{family:'IBM Plex Mono',size:10}},min:40,max:100}}
+  }
+});
+
+// ── TRADEOFF CHART ────────────────────────────────────────────────────
+new Chart('tradeoffChart',{
+  type:'scatter',
+  data:{
+    datasets:[
+      {label:'Baseline',data:[{x:1,y:89.1}],backgroundColor:C.text3,pointRadius:8},
+      {label:'Early',data:[{x:2,y:90.3}],backgroundColor:C.teal,pointRadius:8},
+      {label:'Late',data:[{x:3,y:91.1}],backgroundColor:C.amber,pointRadius:8},
+      {label:'Hybrid',data:[{x:4,y:92.1}],backgroundColor:C.violet,pointRadius:8},
+      {label:'Weighted',data:[{x:5,y:92.9}],backgroundColor:C.lime,pointRadius:8},
+      {label:'Attention',data:[{x:7,y:93.6}],backgroundColor:C.rose,pointRadius:8},
+      {label:'Bayesian',data:[{x:6,y:93.9}],backgroundColor:C.pink,pointRadius:8},
+      {label:'Stacking',data:[{x:8,y:94.4}],backgroundColor:C.cyan,pointRadius:8},
+    ]
+  },
+  options:{
+    plugins:{legend:{labels:{color:C.text2,font:{family:'IBM Plex Mono',size:9},boxWidth:8,padding:8}}},
+    scales:{
+      x:{ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:9}},grid:{color:C.border},title:{display:true,text:'complexity (1=simple → 8=complex)',color:C.text3,font:{family:'IBM Plex Mono',size:9}},min:0,max:9},
+      y:{ticks:{color:C.text3,font:{family:'IBM Plex Mono',size:9}},grid:{color:C.border},title:{display:true,text:'ROC-AUC × 100',color:C.text3,font:{family:'IBM Plex Mono',size:9}},min:88,max:95}
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml

@@ -1,0 +1,35 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Streamlit cache/state
+.streamlit/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Tool caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
