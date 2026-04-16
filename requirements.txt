@@ -1,0 +1,41 @@
+# ═══════════════════════════════════════════════════════════════
+# Applied Data Science Virtual Lab — Dependencies
+# ═══════════════════════════════════════════════════════════════
+# Install: pip install -r requirements.txt
+# Run:     streamlit run app.py
+# ═══════════════════════════════════════════════════════════════
+
+# Core Framework
+streamlit>=1.32.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine Learning & Preprocessing
+scikit-learn>=1.3.0
+
+# Visualization
+plotly>=5.18.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Statistics & Time Series
+scipy>=1.11.0
+statsmodels>=0.14.0
+
+# SMOTE / Imbalanced Learning (Experiment 5)
+imbalanced-learn>=0.11.0
+tqdm>=4.65.0
+
+# Gradient Boosting (Experiment 4 — Model Evaluation)
+xgboost>=2.0.0
+
+# Dimensionality Reduction (Experiment 4 — Model Evaluation)
+umap-learn>=0.5.0
+
+# ─── Optional: AutoML Engines (Experiment 9) ─────────────────
+# These are heavy dependencies. Uncomment only if needed.
+# flaml>=1.2.0
+# autogluon.tabular>=1.1.0
+# h2o>=3.44.0
