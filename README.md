@@ -336,30 +336,6 @@ gatherUsageStats = false
 ---
 
 
-This should not occur in the unified app. If it does, ensure you're running `app.py` from the `VLADS/` root and not an individual experiment file:
-```bash
-# ✅ Correct
-streamlit run app.py
-
-# ❌ Wrong — will bypass the monkeypatch
-streamlit run "ADS-exp-1-virtual-lab-main/app.py"
-```
-</details>
-
-<details>
-<summary><strong>❌ Experiment 5 — "No pre-trained models found"</strong></summary>
-
-Experiment 5 requires pre-trained model weights in the `models/` directory. Run the training script first:
-```bash
-cd "ADS_VirtualLab_SMOTE-main exp 5"
-python train_all_models.py
-cd ..
-```
-</details>
-
-<details>
-<summary><strong>❌ Experiment 9 — AutoGluon / H2O errors</strong></summary>
-
 These libraries have complex system dependencies:
 - **AutoGluon:** Requires specific torch versions. See [AutoGluon install guide](https://auto.gluon.ai/stable/install.html)
 - **H2O:** Requires Java Runtime (JRE 11+). See [H2O docs](https://docs.h2o.ai/)
@@ -412,13 +388,6 @@ Contributions are welcome! To add a new experiment:
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
-
-## 🙏 Acknowledgements
-
-- **Streamlit** — for making data apps delightful to build
-- **scikit-learn** — the backbone of ML experiments
-- **Plotly** — powering interactive visualizations
-- **Department of CSE (Data Science)** — for the experiment curricula
 
 ---
 
