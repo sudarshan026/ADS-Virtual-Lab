@@ -6,6 +6,12 @@
   <img src="https://img.shields.io/badge/Status-Active-00d4ff?style=for-the-badge" alt="Status"/>
 </p>
 
+<p align="center">
+  <a href="https://ads-virtual-lab.streamlit.app/">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-ads--virtual--lab.streamlit.app-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live Demo"/>
+  </a>
+</p>
+
 <h1 align="center">🔬 Applied Data Science — Virtual Lab Platform</h1>
 
 <p align="center">
@@ -13,6 +19,7 @@
 </p>
 
 <p align="center">
+  <a href="https://ads-virtual-lab.streamlit.app/">Live Demo</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-experiments">Experiments</a> •
   <a href="#%EF%B8%8F-architecture">Architecture</a> •
