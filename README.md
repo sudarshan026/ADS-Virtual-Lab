@@ -176,6 +176,75 @@ Run and compare three AutoML engines — **FLAML**, **AutoGluon**, and **H2O Aut
 
 ---
 
+## 🔬 Adding New Experiments
+
+Want to add a new experiment to the ADS Virtual Lab? Follow these steps:
+
+### What you need:
+1. A GitHub repository link containing a working Streamlit application (`app.py` or similar).
+2. The repository should ideally have a `requirements.txt` or a list of dependencies.
+
+### Step-by-Step Guide:
+
+**1. Clone the experiment repository into the workspace**
+Clone the new experiment directly into the root folder of the ADS Virtual Lab.
+```bash
+git clone <your-experiment-repo-url> "ADS-New-Experiment"
+```
+
+**2. Update Dependencies**
+Check the new experiment's `requirements.txt` file and install any new libraries that the main workspace does not currently have:
+```bash
+pip install -r "ADS-New-Experiment/requirements.txt"
+```
+*(Remember to also append these new dependencies to the main `requirements.txt` in the root folder so they aren't lost!)*
+
+**3. Strip `st.set_page_config` Calls**
+The main `app.py` already handles the Streamlit page configuration globally. To prevent errors, open the new experiment's main file (e.g., `ADS-New-Experiment/app.py`) and **remove or comment out** any `st.set_page_config(...)` lines.
+
+**4. Register the Experiment in `app.py`**
+Open the root `app.py` file and locate the `EXPERIMENTS` dictionary. 
+Add your new experiment as the next sequential number. The tuple format is `("folder_name.file_name_without_py", "unique_key")`:
+
+```python
+EXPERIMENTS = {
+    1: ("experiments.exp1_statistics",     "exp1"),
+    # ... existing experiments ...
+    9: ("experiments.exp9_automl",         "exp9"),
+    10: ("ADS-New-Experiment.app",         "exp10"), # <--- Your new experiment
+}
+```
+*Note: If your cloned folder has hyphens (`-`), Python's `importlib` might struggle. It is recommended to rename the cloned folder using underscores (`_`) instead, e.g., `ADS_New_Experiment`.*
+
+**5. Update the Theme Data in `theme.py`**
+Open `theme.py` and locate the metadata lists (`EXPERIMENT_NAMES`, `EXPERIMENT_DESCRIPTIONS`, `EXPERIMENT_ICONS`, `EXPERIMENT_COLORS`). Add your new experiment's details to the **end** of each list:
+
+```python
+EXPERIMENT_NAMES = [
+    "Descriptive & Inferential Statistics",
+    # ...
+    "Your New Experiment Title" # <--- Added
+]
+
+EXPERIMENT_DESCRIPTIONS = [
+    # ...
+    "A short description explaining what your new experiment does." # <--- Added
+]
+
+# Add an emoji to EXPERIMENT_ICONS and a color hex code to EXPERIMENT_COLORS.
+```
+
+**6. Update the Grid Layout in `app.py` (If necessary)**
+If you pass a multiple of 3 (e.g., you now have 10 experiments), Streamlit will automatically flow it onto the next row because the loop in `app.py` dynamically handles the experiment grid formatting. However, make sure to update the `range` upper boundaries if they are hardcoded (e.g., change `range(0, 9, 3)` to `range(0, 12, 3)` and `min(row_start + 3, 9)` to `min(row_start + 3, 12)`).
+
+**7. Run the App!**
+```bash
+streamlit run app.py
+```
+Your new experiment should now appear on the landing page grid and in the sidebar!
+
+---
+
 ## 🏗️ Architecture
 
 ```
