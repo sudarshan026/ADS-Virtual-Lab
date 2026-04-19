@@ -1162,32 +1162,7 @@ def render_upload_section() -> None:
 def render_top_banner() -> None:
     st.markdown(
         """
-        <style>
-            .hero {
-                padding: 1.2rem 1.4rem;
-                border-radius: 18px;
-                background: linear-gradient(135deg, #0f766e 0%, #164e63 50%, #1d4ed8 100%);
-                color: white;
-                margin-bottom: 1rem;
-                box-shadow: 0 10px 30px rgba(2, 6, 23, 0.18);
-            }
-            .hero h1 {
-                margin: 0;
-                font-size: 2.1rem;
-            }
-            .hero p {
-                margin: 0.45rem 0 0 0;
-                font-size: 1rem;
-                opacity: 0.95;
-            }
-            .section-note {
-                padding: 0.8rem 1rem;
-                border-radius: 12px;
-                background: rgba(15, 118, 110, 0.08);
-                border-left: 4px solid #0f766e;
-                margin-bottom: 1rem;
-            }
-        </style>
+        
         <div class="hero">
             <h1>Data Visualization Virtual Lab</h1>
             <p>Upload data, clean it, visualize it, learn why charts work, and test your understanding in one interactive lab.</p>

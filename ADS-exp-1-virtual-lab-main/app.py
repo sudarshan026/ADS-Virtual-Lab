@@ -8,55 +8,7 @@ st.set_page_config(page_title="Virtual Lab", layout="wide")
 
 # -------- CSS --------
 st.markdown("""
-<style>
 
-/* MAIN BACKGROUND */
-.stApp {
-    background-color: #f8fafc;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* TEXT SIZE */
-p, li { font-size: 18px !important; color: #1e293b; }
-
-h1 { font-size: 38px !important; color: #0f172a; }
-h2 { font-size: 28px !important; color: #1e293b; }
-h3 { font-size: 22px !important; color: #334155; }
-
-/* SIDEBAR */
-[data-testid="stSidebar"] {
-    background-color: #0f172a;
-}
-
-[data-testid="stSidebar"] * {
-    color: white !important;
-    font-size: 18px !important;
-}
-
-/* SIDEBAR SELECTED ITEM */
-.css-1d391kg {
-    background-color: #2563eb !important;
-    border-radius: 8px;
-}
-
-/* CARD DESIGN */
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-/* BUTTON */
-.stButton>button {
-    background-color: #2563eb;
-    color: white;
-    border-radius: 8px;
-    padding: 8px 16px;
-}
-
-</style>
 """, unsafe_allow_html=True)
 
 # -------- HEADER --------

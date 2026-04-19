@@ -59,104 +59,7 @@ st.set_page_config(
 
 # ─── CUSTOM CSS ─────────────────────────────────────────────────────────────
 st.markdown("""
-<style>
-/* Import Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
-
-/* Dark gradient header */
-.header-bar {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    padding: 18px 30px;
-    border-radius: 12px;
-    margin-bottom: 18px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-}
-.header-bar h1 {
-    color: #ffffff;
-    margin: 0;
-    font-weight: 700;
-    font-size: 1.7rem;
-    letter-spacing: 0.5px;
-}
-.header-bar p {
-    color: #94d3e8;
-    margin: 4px 0 0 0;
-    font-size: 0.95rem;
-}
-
-/* Card style expanders */
-.stExpander {
-    border: 1px solid #2c3e50;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-    margin-bottom: 12px;
-}
-
-/* Metric cards */
-div[data-testid="stMetric"] {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    padding: 16px 20px;
-    border-radius: 10px;
-    border-left: 4px solid #00d2ff;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-}
-div[data-testid="stMetric"] label {
-    color: #94d3e8 !important;
-}
-div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-    color: #ffffff !important;
-    font-weight: 600;
-}
-
-/* Success / Error / Warning */
-.success-box { background-color: #0d3320; border-left: 4px solid #2ecc71; padding: 12px 16px; border-radius: 8px; color: #a3f7bf; margin: 8px 0; }
-.error-box   { background-color: #3b0d0d; border-left: 4px solid #e74c3c; padding: 12px 16px; border-radius: 8px; color: #f7a3a3; margin: 8px 0; }
-.warning-box { background-color: #3b2e0d; border-left: 4px solid #f39c12; padding: 12px 16px; border-radius: 8px; color: #f7dea3; margin: 8px 0; }
-.info-box    { background-color: #0d1f3b; border-left: 4px solid #3498db; padding: 12px 16px; border-radius: 8px; color: #a3d4f7; margin: 8px 0; }
-
-/* Quiz card */
-.quiz-card {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    padding: 20px 24px;
-    border-radius: 10px;
-    border-left: 5px solid #f39c12;
-    margin-bottom: 16px;
-    color: #e0e0e0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-/* Footer */
-.footer {
-    text-align: center;
-    padding: 20px 0 10px 0;
-    color: #888;
-    font-size: 0.85rem;
-    border-top: 1px solid #333;
-    margin-top: 40px;
-}
-
-/* Sidebar styling */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f2027, #203a43);
-}
-section[data-testid="stSidebar"] .stRadio label {
-    color: #e0e0e0;
-}
-
-/* Tab styling */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px 8px 0 0;
-    padding: 8px 20px;
-    font-weight: 500;
-}
-</style>
 """, unsafe_allow_html=True)
 
 
@@ -277,7 +180,7 @@ if page == PAGES[0]:
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600",
-                 caption="Data-driven decision making", width="stretch")
+                 caption="Data-driven decision making", use_container_width=True)
         st.markdown("""
         #### 🧪 Lab Features
         - 6 mandatory chart types

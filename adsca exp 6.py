@@ -49,21 +49,7 @@ def apply_dark_plot_theme(fig, y_title=None):
 
 # --- Forced Light Theme CSS & Virtual Labs Branding ---
 st.markdown("""
-    <style>
-    .stApp { background-color: white; }
-    h1, h2, h3, p, span, label, div { color: #2c3e50 !important; }
-    .vlab-header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 20px; border-bottom: 3px solid #f39c12; background-color: white;
-    }
-    .vlab-logo { font-size: 26px; font-weight: bold; color: #2980b9 !important; line-height: 1.2; }
-    .breadcrumb { color: #2980b9 !important; font-size: 16px; margin: 15px 20px; font-weight: 500; }
-    [data-testid="stSidebar"] { background-color: #f8f9fa !important; border-right: 1px solid #e0e0e0; }
-    .lab-title { text-align: center; color: #3498db !important; font-size: 34px; margin-top: 10px; font-weight: bold; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-    .stButton>button { background-color: #3498db; color: white !important; border-radius: 4px; border: none; width: 100%; transition: 0.3s; }
-    .stButton>button:hover { background-color: #2980b9; transform: scale(1.02); }
-    .theory-card { padding: 20px; border-radius: 10px; border-left: 5px solid #3498db; background-color: #fdfdfd; margin-bottom: 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
-    </style>
+    
     """, unsafe_allow_html=True)
 
 # --- Top Header Section ---

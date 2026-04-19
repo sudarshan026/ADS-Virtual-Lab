@@ -75,43 +75,46 @@ with st.sidebar:
         st.session_state.current_experiment = 0
         st.rerun()
 
-    st.markdown(
-        "<p style='font-size:0.7rem; color:#64748b; letter-spacing:0.1em;"
-        " text-transform:uppercase; margin:0.8rem 0 0.3rem 0.2rem;'>"
-        "EXPERIMENTS</p>",
-        unsafe_allow_html=True,
-    )
+def render_experiments_sidebar():
+    with st.sidebar:
+        st.markdown(
+            "<p style='font-size:0.7rem; color:#64748b; letter-spacing:0.1em;"
+            " text-transform:uppercase; margin:0.8rem 0 0.3rem 0.2rem;'>"
+            "EXPERIMENTS</p>",
+            unsafe_allow_html=True,
+        )
 
-    for i in range(1, 10):
-        icon = EXPERIMENT_ICONS[i - 1]
-        name = EXPERIMENT_NAMES[i - 1]
-        is_active = st.session_state.current_experiment == i
-        label = f"{icon}  {i}. {name}"
-        if st.button(
-            label,
-            use_container_width=True,
-            key=f"nav_{i}",
-            type="primary" if is_active else "secondary",
-        ):
-            st.session_state.current_experiment = i
-            st.rerun()
+        for i in range(1, 10):
+            icon = EXPERIMENT_ICONS[i - 1]
+            name = EXPERIMENT_NAMES[i - 1]
+            is_active = st.session_state.current_experiment == i
+            label = f"{icon}  {i}. {name}"
+            if st.button(
+                label,
+                use_container_width=True,
+                key=f"nav_{i}",
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state.current_experiment = i
+                st.rerun()
 
-    st.markdown("---")
-    st.markdown(
-        "<div style='text-align:center; font-size:0.68rem; color:#475569;"
-        " line-height:1.6;'>"
-        "<b>Department of CSE (DS)</b><br>"
-        "Applied Data Science Lab<br>"
-        "© 2025"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+        st.markdown("---")
+        st.markdown(
+            "<div style='text-align:center; font-size:0.68rem; color:#475569;"
+            " line-height:1.6;'>"
+            "<b>Department of CSE (DS)</b><br>"
+            "Applied Data Science Lab<br>"
+            "© 2025"
+            "</div>",
+            unsafe_allow_html=True,
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LANDING PAGE
 # ═══════════════════════════════════════════════════════════════════════════
 if st.session_state.current_experiment == 0:
+    render_experiments_sidebar()
 
     # Hero section
     st.markdown("""
@@ -124,6 +127,64 @@ if st.session_state.current_experiment == 0:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── What You Can Do ──
+    st.markdown("""
+    <div class="section-title">What You Can Do</div>
+    <div class="section-sub">Explore core data science workflows interactively.</div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="card">
+            <div class="card-title">📊 Analyze Data</div>
+            <div class="card-desc">
+            Perform statistical analysis and uncover patterns.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="card">
+            <div class="card-title">⚙️ Build Models</div>
+            <div class="card-desc">
+            Train and evaluate machine learning models.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="card">
+            <div class="card-title">📈 Visualize Insights</div>
+            <div class="card-desc">
+            Generate charts and interpret results visually.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Learning Flow ──
+    st.markdown("""
+    <br>
+    <div class="section-title">Learning Flow</div>
+    <div class="section-sub">Follow a structured path from basics to advanced topics.</div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="card" style="font-weight: 600; color: #ea580c; word-spacing: 0.15em; text-align: center;">
+        1️⃣ Data Understanding ➔ 
+        2️⃣ Cleaning ➔ 
+        3️⃣ Visualization ➔ 
+        4️⃣ Modeling ➔ 
+        5️⃣ Evaluation ➔ 
+        6️⃣ Deployment Concepts
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
 
     # Experiment grid — 3 columns × 3 rows
     for row_start in range(0, 9, 3):
@@ -153,14 +214,15 @@ if st.session_state.current_experiment == 0:
                     st.session_state.current_experiment = num
                     st.rerun()
 
-    # Bottom stats
-    st.markdown("<br>", unsafe_allow_html=True)
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Experiments", "9")
-    m2.metric("Topics", "Statistics → AutoML")
-    m3.metric("Framework", "Streamlit")
-    m4.metric("Datasets", "Built-in + Upload")
-
+    # ── Footer ──
+    st.markdown("""
+    <hr>
+    <div style="text-align:center; color:#6b7280; font-size:13px;">
+    Applied Data Science Virtual Lab • Department of CSE (DS)<br>
+    <b>Developed By:</b> Ishan Jadhav • Sudarshan Gopal • Ryan Dsouza • Dhruwal Panchal • Harshit Sachdev<br><br>
+    © 2026 All Rights Reserved
+    </div>
+    """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # EXPERIMENT PAGES
@@ -178,6 +240,33 @@ else:
     try:
         mod = importlib.import_module(module_path)
         mod.run()
+        
+        # ── Experiment Footer ──
+        authors = {
+            1: "Shravani Bhosale • Vedika Dhamale • Akash Jadhav ",
+            2: "Aanchal Gupta • Harshavardhan Khamkar",
+            3: "Aditya Upasani • Raziq Sarwar Irfan Mukadam • Rushikesh Shembade",
+            4: "Isha Prakash Palkar • Akul Patre • Soham Patil • Veda Patki",
+            5: "Aadi Singh Chauhan • Jai Desar • Yash Mahajan • Vedant Mhatre",
+            6: "Akshhad Ahuja • Pranjal Ahuja • Moneet Nitin Bhiwandkar",
+            7: "Riddhi Narendra Jangale • Bhoomika Makhija • Hanishka Vinay Kataria",
+            8: "Riddhi Motwani • Ushma Sukhwani • Rithik Chawla • Ayush Parwani",
+            9: "Pradnya Prabhakar Patil • Sonal Rajendra Patil • Diksha Vinit Patkar • Purva Deepak Mhatre"
+        }
+        
+        if exp_num in authors:
+            st.markdown(f"""
+            <br><br>
+            <hr style="margin-top: 2rem;">
+            <div style="text-align:center; color:#6b7280; font-size:13px;">
+            Applied Data Science Virtual Lab • Department of CSE (DS)<br>
+            <b>Developed By:</b> {authors[exp_num]}<br><br>
+            © 2026 All Rights Reserved
+            </div>
+            """, unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"⚠️ Error loading Experiment {exp_num}: {e}")
         st.exception(e)
+    
+    render_experiments_sidebar()

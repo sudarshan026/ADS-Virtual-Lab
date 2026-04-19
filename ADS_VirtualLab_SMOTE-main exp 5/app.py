@@ -22,25 +22,7 @@ st.set_page_config(
 
 # Apply Google Sans globally
 st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
     
-    * {
-        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-    
-    html, body, [class*="css"] {
-        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-    
-    button, input, textarea, select {
-        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-    </style>
 """, unsafe_allow_html=True)
 
 # Initialize model loader
@@ -93,17 +75,7 @@ def predict_with_model(model, X_test):
 
 # Add custom CSS
 st.markdown("""
-    <style>
-    .main {
-        padding-top: 2rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 0.5rem 0;
-    }
-    </style>
+    
     """, unsafe_allow_html=True)
 
 # Initialize session state for page navigation
@@ -264,81 +236,7 @@ elif st.session_state.current_page == 'simulation':
     st.title("🔬 Interactive Analysis Suite")
     
     st.markdown("""
-    <style>
-    .header-subtitle {
-        font-size: 1.1em;
-        color: #666;
-        margin-bottom: 2rem;
-        line-height: 1.6;
-    }
-    .config-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-    }
-    .config-header {
-        font-size: 1.3em;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-    .dataset-card {
-        background: #f8f9fa;
-        border-left: 4px solid #667eea;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-    .metric-box {
-        background: #e7f3ff;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        border-left: 4px solid #0366d6;
-        height: 250px;
-        box-sizing: border-box;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    .model-comparison {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-    .model-card {
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 8px;
-        border: 2px solid #e1e4e8;
-        transition: all 0.3s ease;
-    }
-    .model-card:hover {
-        border-color: #667eea;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-    }
-    .model-title {
-        font-size: 1.1em;
-        font-weight: 600;
-        color: #0366d6;
-        margin-bottom: 0.5rem;
-    }
-    .model-feature {
-        margin: 0.5rem 0;
-        font-size: 0.95em;
-        line-height: 1.4;
-    }
-    .feature-good {
-        color: #28a745;
-    }
-    .feature-caution {
-        color: #fd7e14;
-    }
-    </style>
+    
     """, unsafe_allow_html=True)
     
     st.markdown(
@@ -675,39 +573,7 @@ elif st.session_state.current_page == 'simulation':
 # Main analysis section
 if "analysis_ready" in st.session_state and st.session_state.analysis_ready:
     st.markdown("""
-    <style>
-    .section-divider {
-        border-top: 3px solid #667eea;
-        margin: 3rem 0 2rem 0;
-    }
-    .section-title {
-        font-size: 1.8em;
-        color: #0f1419;
-        margin-bottom: 1rem;
-        font-weight: 700;
-    }
-    .insight-box {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-    }
-    .success-box {
-        background: #d4edda;
-        border-left: 4px solid #28a745;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-    }
-    .warning-box {
-        background: #f8d7da;
-        border-left: 4px solid #dc3545;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-    }
-    </style>
+    
     """, unsafe_allow_html=True)
     
     # ======== SECTION 1: EXPLORATORY DATA ANALYSIS ========
@@ -725,34 +591,7 @@ if "analysis_ready" in st.session_state and st.session_state.analysis_ready:
     with col1:
         st.markdown("#### Dataset Characteristics")
         st.markdown("""
-        <style>
-        .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 0.8rem 1.2rem;
-            border-radius: 10px;
-            margin-bottom: 0.6rem;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            min-height: 70px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .metric-label {
-            font-size: 0.75em;
-            opacity: 0.9;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .metric-value {
-            font-size: 1.6em;
-            font-weight: 700;
-            line-height: 1.1;
-        }
-        </style>
+        
         """, unsafe_allow_html=True)
         
         info_df = pd.DataFrame(list(st.session_state.dataset_info.items()), 

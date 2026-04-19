@@ -1,4 +1,4 @@
-"""
+r"""
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║                     AUTOML VIRTUAL LAB - Web Application                       ║
 ║                    Powered by Streamlit & AutoML Engines                       ║
@@ -58,42 +58,7 @@ st.set_page_config(
 
 # Custom CSS for better UI
 st.markdown("""
-    <style>
-    .main-header {
-        font-size: 3em;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    .section-header {
-        font-size: 1.8em;
-        color: #ff7f0e;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        border-bottom: 2px solid #ff7f0e;
-        padding-bottom: 10px;
-    }
-    .metric-box {
-        background-color: #f0f2f6;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 10px 0;
-    }
-    .success-box {
-        background-color: #d4edda;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 4px solid #28a745;
-    }
-    .footer {
-        text-align: center;
-        margin-top: 50px;
-        padding-top: 20px;
-        border-top: 2px solid #ddd;
-        color: #666;
-        font-size: 0.9em;
-    }
-    </style>
+    
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
